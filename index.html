@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coming Soon — DFL Importers Portal</title>
+<meta name="theme-color" content="#0f2044">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0f2044; --navy-deep:#0a1730;
+    --blue:#2563eb;
+    --text-faint:#8b99a6;
+    --maxw:460px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Inter',-apple-system,sans-serif; -webkit-font-smoothing:antialiased;}
+
+  .wrap{
+    min-height:100vh; width:100%; color:#fff; position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    background:
+      radial-gradient(circle at 90% 6%, rgba(255,255,255,.14), transparent 42%),
+      linear-gradient(155deg, var(--navy) 0%, var(--navy-deep) 100%);
+  }
+  .wrap::before{content:""; position:absolute; inset:0; opacity:.45; background-image:radial-gradient(rgba(255,255,255,.1) 1px,transparent 1px); background-size:16px 16px; pointer-events:none;}
+
+  .inner{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:0 24px; width:100%;}
+
+  .topbar{display:flex; align-items:center; justify-content:center; padding:28px 0 0;}
+  .topbar img{height:38px;}
+
+  .hero{flex:1; display:flex; align-items:center;}
+  .hero .inner{padding-bottom:40px;}
+
+  .eyebrow{font-size:11px; font-weight:700; letter-spacing:.14em; color:rgba(255,255,255,.6); text-transform:uppercase; margin:0 0 18px; text-align:center;}
+
+  h1{font-size:34px; font-weight:800; line-height:1.15; margin:0 0 14px; text-align:center;}
+  h1 span{color:#7fa8ff;}
+
+  .lede{font-size:14.5px; line-height:1.65; color:rgba(255,255,255,.68); text-align:center; margin:0 0 30px;}
+
+  .contact-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:26px;}
+  .contact-chip{
+    display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:#fff;
+    background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); padding:8px 14px;
+    border-radius:100px; text-decoration:none;
+  }
+  .contact-chip svg{width:13px; height:13px; flex-shrink:0;}
+
+  .social-row{display:flex; gap:10px; justify-content:center;}
+  .social-icon{width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center;}
+  .social-icon svg{width:17px; height:17px;}
+
+  footer{position:relative; z-index:2; padding:22px 0; text-align:center;}
+  footer p{font-size:11px; color:var(--text-faint); margin:0;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar inner">
+    <img src="https://hzagwndglwhcepsirafi.supabase.co/storage/v1/object/public/Assets/DFL%20Logo%20Blue_Black.png" alt="DFL Importers">
+  </div>
+
+  <section class="hero">
+    <div class="inner">
+      <p class="eyebrow">Customer Portal</p>
+      <h1>Something new is <span>on the way.</span></h1>
+      <p class="lede">We're building a new home for our customers — orders, catalogues and account info, all in one place. Check back soon.</p>
+
+      <div class="contact-row">
+        <a class="contact-chip" href="https://www.dflimporters.com" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+          <span>dflimporters.com</span>
+        </a>
+        <a class="contact-chip" href="mailto:info@dflimporters.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+          <span>info@dflimporters.com</span>
+        </a>
+      </div>
+
+      <div class="social-row">
+        <a class="social-icon" href="https://instagram.com/dflimporters" target="_blank" rel="noopener" aria-label="DFL Importers on Instagram">
+          <svg viewBox="0 0 24 24">
+            <defs>
+              <linearGradient id="ig-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#FFDD55"/>
+                <stop offset="30%" stop-color="#FF543E"/>
+                <stop offset="60%" stop-color="#C837AB"/>
+                <stop offset="100%" stop-color="#5851DB"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#ig-gradient)" d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 2 .3 2.4.5.6.2 1 .5 1.5 1 .4.4.7.9 1 1.5.2.4.4 1.2.5 2.4.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.3 2-.5 2.4-.2.6-.5 1-1 1.5-.4.4-.9.7-1.5 1-.4.2-1.2.4-2.4.5-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-2-.3-2.4-.5-.6-.2-1-.5-1.5-1-.4-.4-.7-.9-1-1.5-.2-.4-.4-1.2-.5-2.4C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.3-2 .5-2.4.2-.6.5-1 1-1.5.4-.4.9-.7 1.5-1 .4-.2 1.2-.4 2.4-.5C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1 .1-1.6.2-1.9.4-.5.2-.8.4-1.1.7-.3.3-.5.6-.7 1.1-.1.3-.3.9-.4 1.9-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1 1 .2 1.6.4 1.9.2.5.4.8.7 1.1.3.3.6.5 1.1.7.3.1.9.3 1.9.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1-.1 1.6-.2 1.9-.4.5-.2.8-.4 1.1-.7.3-.3.5-.6.7-1.1.1-.3.3-.9.4-1.9.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-1-.2-1.6-.4-1.9-.2-.5-.4-.8-.7-1.1-.3-.3-.6-.5-1.1-.7-.3-.1-.9-.3-1.9-.4-1.2-.1-1.6-.1-4.7-.1zm0 4.6a5.4 5.4 0 1 1 0 10.8 5.4 5.4 0 0 1 0-10.8zm0 1.8a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm5.6-2a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6z"/>
+          </svg>
+        </a>
+        <a class="social-icon" href="https://facebook.com/dflimporters" target="_blank" rel="noopener" aria-label="DFL Importers on Facebook">
+          <svg viewBox="0 0 24 24"><path fill="#1877F2" d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12z"/></svg>
+        </a>
+        <a class="social-icon" href="https://linkedin.com/company/dfl-importers" target="_blank" rel="noopener" aria-label="DFL Importers on LinkedIn">
+          <svg viewBox="0 0 24 24"><path fill="#0A66C2" d="M20.5 2h-17A1.5 1.5 0 0 0 2 3.5v17A1.5 1.5 0 0 0 3.5 22h17a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 20.5 2zM8.3 18.5H5.7V9.8h2.6v8.7zM7 8.7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm11.5 9.8h-2.6v-4.2c0-1 0-2.3-1.4-2.3s-1.6 1.1-1.6 2.3v4.2h-2.6V9.8h2.5v1.2h.1c.3-.7 1.2-1.4 2.5-1.4 2.7 0 3.1 1.8 3.1 4v4.9z"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer><div class="inner"><p>DFL Importers &amp; Distributors — Kingston, Jamaica</p></div></footer>
+</div>
+
+</body>
+</html>
