@@ -240,7 +240,7 @@ async function doMicrosoftLogin(){
   errBox.textContent = '';
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'azure',
-    options: { redirectTo: window.location.href.split('#')[0].split('?')[0] }
+    options: { redirectTo: window.location.href.split('#')[0].split('?')[0], scopes: 'email' }
   });
   if(error){
     console.error('Microsoft sign-in failed:', error);
