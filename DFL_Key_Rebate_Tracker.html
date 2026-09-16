@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DFL Key Account Rebate Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D1B3E; --navy-mid:#1a2e5a; --blue:#326BD3;
+  --bg:#F5F7FA; --surface:#FFFFFF; --surface-alt:#F9FAFC;
+  --border:#E4E9F2; --border-soft:#EEF1F8;
+  --text:#1A2340; --text-mid:#4A5578; --text-soft:#8A95B0;
+  --silver:#7C8AA5; --silver-bg:#EEF1F6;
+  --gold:#C9821A; --gold-bg:#FFF7E8;
+  --plat:#9C2748; --plat-bg:#FBE9EE;
+  --none-bg:#F2F4F8;
+  --radius:10px; --shadow:0 1px 4px rgba(26,35,64,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+
+.topbar{background:linear-gradient(135deg,#0D1B3E,#152755);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:3px solid var(--gold);}
+.topbar h1{font-family:'Montserrat',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-0.2px;}
+.topbar p{font-size:11.5px;color:rgba(255,255,255,0.5);margin-top:3px;}
+.asof{font-size:11.5px;color:rgba(255,255,255,0.65);background:rgba(255,255,255,0.08);padding:6px 12px;border-radius:20px;font-family:'Montserrat',sans-serif;font-weight:600;}
+
+.kpi-strip{background:linear-gradient(135deg,#1a2e5a,#22386b);padding:14px 28px;display:flex;gap:0;overflow-x:auto;}
+.kpi{padding:2px 22px;border-right:1px solid rgba(255,255,255,0.1);min-width:120px;}
+.kpi:last-child{border-right:none;}
+.kpi-label{font-size:10px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.7px;font-weight:700;font-family:'Montserrat',sans-serif;}
+.kpi-val{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:#fff;margin-top:4px;}
+.kpi-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
+
+.tabs{display:flex;gap:2px;padding:16px 28px 0;}
+.tab{padding:10px 22px;border-radius:9px 9px 0 0;font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--text-mid);background:var(--border-soft);border:1px solid var(--border);border-bottom:none;}
+.tab.active{background:var(--surface);color:var(--navy);box-shadow:inset 0 -2px 0 var(--gold);}
+.tab .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#9DA8C4;margin-right:6px;}
+.tab.active .dot{background:#3ABF6E;}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:0 8px 8px 8px;margin:0 28px 28px;padding:18px 20px 8px;}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:0 0 14px;font-size:11.5px;color:var(--text-mid);}
+.legend b{color:var(--text);}
+.legend .chip{display:inline-flex;align-items:center;gap:5px;}
+.legend .sw{width:9px;height:9px;border-radius:2px;}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;flex-wrap:wrap;gap:8px;}
+.toolbar label{font-size:12px;color:var(--text-mid);font-weight:600;font-family:'Montserrat',sans-serif;margin-right:6px;}
+.toolbar select{border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12.5px;font-family:'Open Sans',sans-serif;background:#fff;color:var(--text);}
+
+table{width:100%;border-collapse:collapse;font-size:12.8px;}
+thead th{text-align:left;padding:8px 10px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-mid);border-bottom:2px solid var(--border);font-family:'Montserrat',sans-serif;background:var(--surface-alt);white-space:nowrap;}
+tr.col-header-row td{text-align:left;padding:8px 10px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-mid);border-bottom:2px solid var(--border);border-top:none;font-family:'Montserrat',sans-serif;background:var(--surface-alt);white-space:nowrap;}
+tr.col-header-row td.r{text-align:right;}
+thead th.r{text-align:right;}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums;}
+tbody tr:hover{background:var(--surface-alt);}
+.cname{font-weight:600;color:var(--text);}
+
+.tier-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Montserrat',sans-serif;white-space:nowrap;}
+.tier-pill .pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.tier-Silver{background:var(--silver-bg);color:#4A5578;}
+.tier-Silver .pdot{background:var(--silver);}
+.tier-Gold{background:var(--gold-bg);color:#8A5A0A;}
+.tier-Gold .pdot{background:var(--gold);}
+.tier-Platinum{background:var(--plat-bg);color:var(--plat);}
+.tier-Platinum .pdot{background:var(--plat);}
+.tier-none{background:var(--none-bg);color:var(--text-soft);}
+
+.pbar-wrap{width:170px;}
+.pbar{position:relative;height:16px;background:var(--none-bg);border-radius:4px;overflow:visible;}
+.pbar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--blue);}
+.pbar-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:rgba(26,35,64,0.25);}
+.pbar-tick.hit{background:rgba(26,35,64,0.55);}
+.pbar-tag{position:absolute;top:-15px;font-size:8.5px;font-weight:700;color:var(--text-soft);transform:translateX(-50%);font-family:'Montserrat',sans-serif;}
+.pbar-sub{font-size:10.5px;color:var(--text-soft);margin-top:3px;}
+
+.to-next{font-size:12px;}
+.to-next b{color:var(--navy);}
+.achieved-tag{font-size:11px;color:#1A8F4C;font-weight:700;}
+
+.footer-note{padding:14px 8px 20px;font-size:11px;color:var(--text-soft);}
+
+.base-url-row{display:flex;align-items:center;gap:8px;padding:0 0 12px;flex-wrap:wrap;}
+.base-url-row label{font-size:11.5px;font-weight:700;color:var(--text-mid);font-family:'Montserrat',sans-serif;white-space:nowrap;}
+.base-url-row input{flex:1;min-width:260px;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text-mid);font-family:monospace;}
+
+.search-row{margin-bottom:12px;}
+.search-row input{width:100%;max-width:340px;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:'Open Sans',sans-serif;}
+
+.copy-btn{background:var(--surface);border:1px solid var(--blue);color:var(--blue);font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;}
+.copy-btn:hover{background:#EAF1FF;}
+.copy-btn.copied{background:#1A8F4C;border-color:#1A8F4C;color:#fff;}
+
+.group-tag{display:inline-block;margin-left:8px;font-size:10px;font-weight:700;color:var(--blue);cursor:pointer;font-family:'Montserrat',sans-serif;background:#EAF1FF;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.group-tag:hover{background:#D6E4FF;}
+
+.view-toggle{display:flex;gap:2px;background:var(--none-bg);border-radius:8px;padding:3px;}
+.view-toggle button{border:none;background:transparent;padding:6px 14px;border-radius:6px;font-family:'Montserrat',sans-serif;font-size:11.5px;font-weight:700;color:var(--text-mid);cursor:pointer;}
+.view-toggle button.active{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(26,35,64,0.15);}
+
+.band-header-row td{padding:0 !important;border:none !important;}
+.band-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;margin-top:14px;border-radius:8px 8px 0 0;color:#fff;font-family:'Montserrat',sans-serif;}
+.band-header.band-header-first{margin-top:0;}
+.band-header.Platinum{background:linear-gradient(90deg,#6B1F3D,#A63A5E);}
+.band-header.Gold{background:linear-gradient(90deg,#B5720F,#DDA23A);}
+.band-header.Silver{background:linear-gradient(90deg,#5C6884,#8B96AF);}
+.band-header .bh-left{display:flex;align-items:center;gap:10px;}
+.band-header .bh-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.9);}
+.band-header .bh-name{font-weight:800;font-size:13.5px;letter-spacing:0.2px;}
+.band-header .bh-count{font-size:11px;color:rgba(255,255,255,0.75);font-weight:600;}
+.band-header .bh-rate{font-size:12px;font-weight:700;background:rgba(255,255,255,0.18);padding:3px 10px;border-radius:20px;}
+
+.grp-tbody{box-shadow:0 1px 3px rgba(26,35,64,0.06);}
+tbody tr.band-row-Platinum{border-left:3px solid var(--plat);}
+tbody tr.band-row-Gold{border-left:3px solid var(--goldc);}
+tbody tr.band-row-Silver{border-left:3px solid var(--silver);}
+tbody tr.band-row-Platinum td:first-child, tbody tr.band-row-Gold td:first-child, tbody tr.band-row-Silver td:first-child{padding-left:13px;}
+
+.unenrolled{margin:0 28px 28px;background:#FFFBEB;border:1px solid #F5E2B8;border-radius:8px;padding:12px 18px;font-size:12px;color:#7A5A0A;}
+.unenrolled b{font-family:'Montserrat',sans-serif;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Key Account Rebate Tracker</h1>
+    <p>DFL Importers — Quarterly cash rebate progress by Key customer (draft / prototype)</p>
+  </div>
+  <div class="asof">As of Sep 8, 2026</div>
+</div>
+
+<div class="kpi-strip" id="kpiStrip"></div>
+
+<div class="tabs" id="tabs">
+  <div class="tab" data-q="q1"><span class="dot"></span>Q1 2026 — Closed</div>
+  <div class="tab" data-q="q2"><span class="dot"></span>Q2 2026 — Closed</div>
+  <div class="tab active" data-q="q3"><span class="dot"></span>Q3 2026 — Live</div>
+</div>
+
+<div class="panel">
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--silver)"></span><b>Silver band</b> — smallest 18 by target · 1% rebate</span>
+    <span class="chip"><span class="sw" style="background:var(--gold)"></span><b>Gold band</b> — middle 18 by target · 1.5% rebate</span>
+    <span class="chip"><span class="sw" style="background:var(--plat)"></span><b>Platinum band</b> — largest 18 by target · 2% rebate</span>
+    <span style="color:var(--text-soft)">Band is by account size, re-cut each quarter. Rebate pays only if the customer hits 100% of their own target.</span>
+  </div>
+  <div class="base-url-row">
+    <label>Customer Portal URL (same link for every customer):</label>
+    <input type="text" id="baseUrlInput" value="PASTE-YOUR-HOSTED-URL-HERE/DFL_Key_Rebate_CustomerView.html">
+  </div>
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="Search customer name to find their passcode or status…">
+  </div>
+  <div class="toolbar">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div class="view-toggle" id="viewToggle">
+        <button data-view="grouped" class="active">Grouped by band</button>
+        <button data-view="flat">Flat list</button>
+      </div>
+      <div>
+        <label>Sort within group by</label>
+        <select id="sortSel">
+          <option value="target_desc">Target size (largest first)</option>
+          <option value="ach_desc" selected>Achievement % (highest first)</option>
+          <option value="ach_asc">Achievement % (lowest first)</option>
+          <option value="next_asc">$ to qualify (closest first)</option>
+          <option value="name">Customer name</option>
+        </select>
+      </div>
+    </div>
+    <div style="color:var(--text-soft);font-size:11.5px;" id="rowCount"></div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="footer-note" id="footNote"></div>
+</div>
+
+<div class="unenrolled">
+  <b>Not yet enrollable:</b> Afresh Supermarket-Kingston and Master Mac Food Store-Constant Spring have no quarterly target in <code>budget_2026_by_customer</code>, so a tier/rebate can't be calculated for them yet. Set a target before adding them to the program.
+</div>
+
+<script>
+const DATA = {"summary": {"as_of": "Sep 10, 2026", "enrolled_count": 54, "unenrolled_count": 1, "tot_q1_target": 485540742.76, "tot_q1_actual": 438618965.58, "tot_q1_rebate": 3427911.04, "tot_q2_target": 504089620.26, "tot_q2_actual": 441904566.01, "tot_q2_rebate": 3773230.2, "tot_q3_target": 556708991.21, "tot_q3_actual": 365392599.71, "tot_q3_rebate_so_far": 624958.24, "q3_qualified_count": 5, "q3_band_counts": {"Platinum": 18, "Gold": 18, "Silver": 18}}, "customers": [{"id": "progressive_group", "name": "PROGRESSIVE GROUP", "portfolio": "Chain", "is_group": true, "n_stores": 27, "passcode": "progressivegroup007", "q1": {"budget": 68325843.59, "actual": 80861398.13, "ach": 118.3, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 1617227.96, "reward_at_100": 1366516.87, "amt_to_qualify": 0, "rank": 3, "total_n": 18}, "q2": {"budget": 79603371.23, "actual": 83780109.62, "ach": 105.2, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 1675602.19, "reward_at_100": 1592067.42, "amt_to_qualify": 0, "rank": 4, "total_n": 18}, "q3": {"budget": 98991381.49, "actual": 73720059.78, "ach": 74.5, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 1979827.63, "amt_to_qualify": 25271321.71, "rank": 3, "total_n": 18}, "stores": {"q1": [{"name": "PROGRESSIVE FOODS BOGUE", "budget": 8186534.62, "actual": 9764811.57, "ach": 119.3}, {"name": "PROGRESSIVE FOODS PORTMORE", "budget": 5032019.53, "actual": 5879734.39, "ach": 116.8}, {"name": "SUPER SHOPPERS FAIR BOULEVARD", "budget": 3977545.72, "actual": 5038695.7, "ach": 126.7}, {"name": "PROGRESSIVE FOODS WHITTER VILLAGE", "budget": 4931338.85, "actual": 5717992.23, "ach": 116.0}, {"name": "SHOPPERS FAIR SAVANNA-LA-MAR", "budget": 4382507.0, "actual": 3750950.15, "ach": 85.6}, {"name": "SHOPPERS FAIR BRUNSWICK", "budget": 2986076.92, "actual": 3500596.16, "ach": 117.2}, {"name": "SUPER SHOPPERS FAIR MAYPEN", "budget": 3206200.79, "actual": 3312596.37, "ach": 103.3}, {"name": "SHOPPERS FAIR PORTMORE MALL", "budget": 4144560.73, "actual": 4450689.0, "ach": 107.4}, {"name": "PROGRESSIVE GROCERS", "budget": 2398881.25, "actual": 12733031.35, "ach": 530.8}, {"name": "PROGRESSIVE FOODS OCHO RIOS", "budget": 3311707.6, "actual": 3130974.44, "ach": 94.5}, {"name": "D & Y SUPERMARKET WHOLESALE", "budget": 2850592.7, "actual": 2604329.44, "ach": 91.4}, {"name": "SHOPPERS FAIR DUHANEY PARK", "budget": 3051285.65, "actual": 3385314.55, "ach": 110.9}, {"name": "PROGRESSIVE FOODS MANDEVILLE SUPERMARKET", "budget": 4510504.88, "actual": 4612209.02, "ach": 102.3}, {"name": "SHOPPERS FAIR MANCHESTER", "budget": 3030615.86, "actual": 2853432.5, "ach": 94.2}, {"name": "SHOPPERS FAIR BURKE ROAD", "budget": 2296257.86, "actual": 2773714.54, "ach": 120.8}, {"name": "SHOPPERS FAIR WESTGATE", "budget": 0.0, "actual": -21739.66, "ach": null}, {"name": "SHOPPERS FAIR JUNCTION", "budget": 3139633.6, "actual": 2839885.13, "ach": 90.5}, {"name": "SHOPPERS FAIR HARBOUR VIEW", "budget": 1770549.9, "actual": 1430010.08, "ach": 80.8}, {"name": "SHOPPERS FAIR BLUE DIAMOND", "budget": 1831259.29, "actual": 1418350.63, "ach": 77.5}, {"name": "SHOPPERS FAIR LIGUANEA", "budget": 1787649.04, "actual": 1716240.41, "ach": 96.0}, {"name": "SHOPPERS FAIR HARBOUR VIEW", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR MANDEVILLE", "budget": 0.0, "actual": -29847.19, "ach": null}, {"name": "SHOPPERS FAIR BOULEVARD", "budget": 0.0, "actual": -572.68, "ach": null}, {"name": "SHOPPERS FAIR PP", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR GREATER PORTMORE", "budget": 264121.8, "actual": 0.0, "ach": 0.0}, {"name": "SHOPPERS FAIR BARGAIN", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SUPER SHOPPERS FAIR MANCHESTER", "budget": 1236000.0, "actual": 0.0, "ach": 0.0}], "q2": [{"name": "PROGRESSIVE FOODS BOGUE", "budget": 8328703.33, "actual": 10876671.13, "ach": 130.6}, {"name": "PROGRESSIVE FOODS PORTMORE", "budget": 6475778.92, "actual": 5841873.24, "ach": 90.2}, {"name": "SUPER SHOPPERS FAIR BOULEVARD", "budget": 4703658.37, "actual": 4945702.99, "ach": 105.1}, {"name": "PROGRESSIVE FOODS WHITTER VILLAGE", "budget": 4721861.23, "actual": 5540630.5, "ach": 117.3}, {"name": "SHOPPERS FAIR SAVANNA-LA-MAR", "budget": 4548017.29, "actual": 4354573.64, "ach": 95.7}, {"name": "SHOPPERS FAIR BRUNSWICK", "budget": 3850180.58, "actual": 4056227.47, "ach": 105.4}, {"name": "SUPER SHOPPERS FAIR MAYPEN", "budget": 4240457.25, "actual": 4289464.63, "ach": 101.2}, {"name": "SHOPPERS FAIR PORTMORE MALL", "budget": 4526377.28, "actual": 4852565.06, "ach": 107.2}, {"name": "PROGRESSIVE GROCERS", "budget": 6905177.05, "actual": 5397326.0, "ach": 78.2}, {"name": "PROGRESSIVE FOODS OCHO RIOS", "budget": 3861470.38, "actual": 3079153.16, "ach": 79.7}, {"name": "D & Y SUPERMARKET WHOLESALE", "budget": 3204320.64, "actual": 4502106.99, "ach": 140.5}, {"name": "SHOPPERS FAIR DUHANEY PARK", "budget": 3301063.91, "actual": 3997521.6, "ach": 121.1}, {"name": "PROGRESSIVE FOODS MANDEVILLE SUPERMARKET", "budget": 5754808.62, "actual": 6190625.06, "ach": 107.6}, {"name": "SHOPPERS FAIR MANCHESTER", "budget": 2982094.61, "actual": 2992773.46, "ach": 100.4}, {"name": "SHOPPERS FAIR BURKE ROAD", "budget": 3435538.17, "actual": 3192091.74, "ach": 92.9}, {"name": "SHOPPERS FAIR WESTGATE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR JUNCTION", "budget": 3003160.05, "actual": 3959967.07, "ach": 131.9}, {"name": "SHOPPERS FAIR HARBOUR VIEW", "budget": 2271036.48, "actual": 1749757.03, "ach": 77.0}, {"name": "SHOPPERS FAIR BLUE DIAMOND", "budget": 2069198.05, "actual": 2249973.6, "ach": 108.7}, {"name": "SHOPPERS FAIR LIGUANEA", "budget": 1420469.02, "actual": 1717956.67, "ach": 120.9}, {"name": "SHOPPERS FAIR HARBOUR VIEW", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR MANDEVILLE", "budget": 0.0, "actual": -6851.42, "ach": null}, {"name": "SHOPPERS FAIR BOULEVARD", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR PP", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR GREATER PORTMORE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR BARGAIN", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SUPER SHOPPERS FAIR MANCHESTER", "budget": 0.0, "actual": 0.0, "ach": null}], "q3": [{"name": "PROGRESSIVE FOODS BOGUE", "budget": 9788507.25, "actual": 9585095.26, "ach": 97.9}, {"name": "PROGRESSIVE FOODS PORTMORE", "budget": 8429033.49, "actual": 6328935.27, "ach": 75.1}, {"name": "SUPER SHOPPERS FAIR BOULEVARD", "budget": 7294870.19, "actual": 4172631.42, "ach": 57.2}, {"name": "PROGRESSIVE FOODS WHITTER VILLAGE", "budget": 7222674.45, "actual": 4627025.08, "ach": 64.1}, {"name": "SHOPPERS FAIR SAVANNA-LA-MAR", "budget": 5728347.92, "actual": 3902209.85, "ach": 68.1}, {"name": "SHOPPERS FAIR BRUNSWICK", "budget": 5594796.75, "actual": 3278605.36, "ach": 58.6}, {"name": "SUPER SHOPPERS FAIR MAYPEN", "budget": 5443621.99, "actual": 2973276.42, "ach": 54.6}, {"name": "SHOPPERS FAIR PORTMORE MALL", "budget": 5327089.91, "actual": 4789271.18, "ach": 89.9}, {"name": "PROGRESSIVE GROCERS", "budget": 4844884.91, "actual": 5616965.0, "ach": 115.9}, {"name": "PROGRESSIVE FOODS OCHO RIOS", "budget": 4417475.14, "actual": 3215192.75, "ach": 72.8}, {"name": "D & Y SUPERMARKET WHOLESALE", "budget": 4318917.77, "actual": 2922615.61, "ach": 67.7}, {"name": "SHOPPERS FAIR DUHANEY PARK", "budget": 4257179.13, "actual": 3175931.89, "ach": 74.6}, {"name": "PROGRESSIVE FOODS MANDEVILLE SUPERMARKET", "budget": 4183610.36, "actual": 5443526.0, "ach": 130.1}, {"name": "SHOPPERS FAIR MANCHESTER", "budget": 3800478.42, "actual": 2765258.63, "ach": 72.8}, {"name": "SHOPPERS FAIR BURKE ROAD", "budget": 3720595.45, "actual": 2697432.86, "ach": 72.5}, {"name": "SHOPPERS FAIR WESTGATE", "budget": 3643581.87, "actual": 0.0, "ach": 0.0}, {"name": "SHOPPERS FAIR JUNCTION", "budget": 3552156.25, "actual": 3276617.32, "ach": 92.2}, {"name": "SHOPPERS FAIR HARBOUR VIEW", "budget": 2710404.0, "actual": 1732864.88, "ach": 63.9}, {"name": "SHOPPERS FAIR BLUE DIAMOND", "budget": 2462512.13, "actual": 1434118.33, "ach": 58.2}, {"name": "SHOPPERS FAIR LIGUANEA", "budget": 2250644.11, "actual": 1782486.67, "ach": 79.2}, {"name": "SHOPPERS FAIR HARBOUR VIEW", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR MANDEVILLE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR BOULEVARD", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR PP", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR GREATER PORTMORE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SHOPPERS FAIR BARGAIN", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SUPER SHOPPERS FAIR MANCHESTER", "budget": 0.0, "actual": 0.0, "ach": null}]}}, {"id": "C000003331", "name": "NATIONAL SELF SERVE BROOKS AVENUE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "national331", "q1": {"budget": 30803162.65, "actual": 29220532.74, "ach": 94.9, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 616063.25, "amt_to_qualify": 1582629.91, "rank": 7, "total_n": 18}, "q2": {"budget": 40933047.22, "actual": 38317915.6, "ach": 93.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 818660.94, "amt_to_qualify": 2615131.62, "rank": 6, "total_n": 18}, "q3": {"budget": 43876649.44, "actual": 30044255.75, "ach": 68.5, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 877532.99, "amt_to_qualify": 13832393.69, "rank": 5, "total_n": 18}}, {"id": "C000003778", "name": "PRICE SMART JAMAICA LIMITED", "portfolio": "Chain", "is_group": false, "n_stores": 1, "passcode": "price778", "q1": {"budget": 36183331.95, "actual": 33046450.08, "ach": 91.3, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 723666.64, "amt_to_qualify": 3136881.87, "rank": 9, "total_n": 18}, "q2": {"budget": 27827976.36, "actual": 38133496.51, "ach": 137.0, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 762669.93, "reward_at_100": 556559.53, "amt_to_qualify": 0, "rank": 1, "total_n": 18}, "q3": {"budget": 40298711.79, "actual": 20275301.5, "ach": 50.3, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 805974.24, "amt_to_qualify": 20023410.29, "rank": 13, "total_n": 18}}, {"id": "hilo", "name": "HILO GROUP", "portfolio": "Chain", "is_group": true, "n_stores": 19, "passcode": "hilo005", "q1": {"budget": 32875806.39, "actual": 24083372.73, "ach": 73.3, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 657516.13, "amt_to_qualify": 8792433.66, "rank": 13, "total_n": 18}, "q2": {"budget": 29068375.41, "actual": 23152570.67, "ach": 79.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 581367.51, "amt_to_qualify": 5915804.74, "rank": 11, "total_n": 18}, "q3": {"budget": 35623955.84, "actual": 20945403.29, "ach": 58.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 712479.12, "amt_to_qualify": 14678552.55, "rank": 9, "total_n": 18}, "stores": {"q1": [{"name": "HILO LIGUANEA.", "budget": 10154626.97, "actual": 6638962.79, "ach": 65.4}, {"name": "HILO CROSS ROADS", "budget": 2478397.62, "actual": 2519860.0, "ach": 101.7}, {"name": "HILO BARBICAN", "budget": 3730047.35, "actual": 3045493.3, "ach": 81.6}, {"name": "HILO SPANISH TOWN", "budget": 2497016.55, "actual": 2417471.72, "ach": 96.8}, {"name": "HILO PORTMORE PINES", "budget": 4823767.19, "actual": 2847324.34, "ach": 59.0}, {"name": "HILO MANOR PARK", "budget": 3048890.31, "actual": 2234376.71, "ach": 73.3}, {"name": "HILO PAVILION", "budget": 1550572.84, "actual": 1294793.96, "ach": 83.5}, {"name": "HILO NEGRIL", "budget": 1213954.49, "actual": 1563179.14, "ach": 128.8}, {"name": "HILO MOBAY", "budget": 1186804.87, "actual": 1269609.58, "ach": 107.0}, {"name": "HILO BASIX", "budget": 454305.84, "actual": 202720.25, "ach": 44.6}, {"name": "HILO FOOD STORES HEAD OFFICE", "budget": 351860.0, "actual": 0.0, "ach": 0.0}, {"name": "HILO BOARDWALK", "budget": 789562.36, "actual": 49580.94, "ach": 6.3}, {"name": "HILO DOWNTOWN EXPRESS", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO STUDENT UNION", "budget": 596000.0, "actual": 0.0, "ach": 0.0}, {"name": "HILO PAPINE CAMP", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO MANDEVILLE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO SAV", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO OCHO RIOS", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO EXPRESS", "budget": 0.0, "actual": 0.0, "ach": null}], "q2": [{"name": "HILO LIGUANEA.", "budget": 10462195.72, "actual": 5779737.26, "ach": 55.2}, {"name": "HILO CROSS ROADS", "budget": 2455782.74, "actual": 2003014.74, "ach": 81.6}, {"name": "HILO BARBICAN", "budget": 3413899.0, "actual": 3229702.34, "ach": 94.6}, {"name": "HILO SPANISH TOWN", "budget": 2253737.62, "actual": 2039720.91, "ach": 90.5}, {"name": "HILO PORTMORE PINES", "budget": 4309120.75, "actual": 2446397.16, "ach": 56.8}, {"name": "HILO MANOR PARK", "budget": 2780593.84, "actual": 3126323.28, "ach": 112.4}, {"name": "HILO PAVILION", "budget": 921716.39, "actual": 1525676.24, "ach": 165.5}, {"name": "HILO NEGRIL", "budget": 518422.4, "actual": 363540.83, "ach": 70.1}, {"name": "HILO MOBAY", "budget": 896825.9, "actual": 1344792.93, "ach": 150.0}, {"name": "HILO BASIX", "budget": 432205.78, "actual": 351471.03, "ach": 81.3}, {"name": "HILO FOOD STORES HEAD OFFICE", "budget": 88020.0, "actual": 0.0, "ach": 0.0}, {"name": "HILO BOARDWALK", "budget": 535855.27, "actual": 942193.95, "ach": 175.8}, {"name": "HILO DOWNTOWN EXPRESS", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO STUDENT UNION", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO PAPINE CAMP", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO MANDEVILLE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO SAV", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO OCHO RIOS", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO EXPRESS", "budget": 0.0, "actual": 0.0, "ach": null}], "q3": [{"name": "HILO LIGUANEA.", "budget": 9294782.53, "actual": 5863446.77, "ach": 63.1}, {"name": "HILO CROSS ROADS", "budget": 5604813.85, "actual": 2060691.69, "ach": 36.8}, {"name": "HILO BARBICAN", "budget": 4776804.18, "actual": 2759653.02, "ach": 57.8}, {"name": "HILO SPANISH TOWN", "budget": 4005528.75, "actual": 1568560.54, "ach": 39.2}, {"name": "HILO PORTMORE PINES", "budget": 3911747.46, "actual": 2386770.61, "ach": 61.0}, {"name": "HILO MANOR PARK", "budget": 3319356.16, "actual": 2791299.82, "ach": 84.1}, {"name": "HILO PAVILION", "budget": 1903831.64, "actual": 998330.79, "ach": 52.4}, {"name": "HILO NEGRIL", "budget": 1206692.39, "actual": 277647.42, "ach": 23.0}, {"name": "HILO MOBAY", "budget": 823218.02, "actual": 1268522.59, "ach": 154.1}, {"name": "HILO BASIX", "budget": 433512.27, "actual": 240867.33, "ach": 55.6}, {"name": "HILO FOOD STORES HEAD OFFICE", "budget": 227070.0, "actual": 0.0, "ach": 0.0}, {"name": "HILO BOARDWALK", "budget": 116598.59, "actual": 729612.71, "ach": 625.7}, {"name": "HILO DOWNTOWN EXPRESS", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO STUDENT UNION", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO PAPINE CAMP", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO MANDEVILLE", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO SAV", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO OCHO RIOS", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "HILO EXPRESS", "budget": 0.0, "actual": 0.0, "ach": null}]}}, {"id": "brooklyn", "name": "BROOKLYN GROUP", "portfolio": "Key", "is_group": true, "n_stores": 2, "passcode": "brooklyn004", "q1": {"budget": 14290611.47, "actual": 12804964.43, "ach": 89.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 285812.23, "amt_to_qualify": 1485647.04, "rank": 11, "total_n": 18}, "q2": {"budget": 16914800.41, "actual": 12670655.07, "ach": 74.9, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 338296.01, "amt_to_qualify": 4244145.34, "rank": 12, "total_n": 18}, "q3": {"budget": 21801486.97, "actual": 11497105.77, "ach": 52.7, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 436029.74, "amt_to_qualify": 10304381.2, "rank": 12, "total_n": 18}, "stores": {"q1": [{"name": "BROOKLYN CLOCK TOWER", "budget": 8330419.3, "actual": 6904191.59, "ach": 82.9}, {"name": "BROOKLYN TWIN GATES", "budget": 5960192.17, "actual": 5900772.84, "ach": 99.0}], "q2": [{"name": "BROOKLYN CLOCK TOWER", "budget": 9686797.29, "actual": 6595960.71, "ach": 68.1}, {"name": "BROOKLYN TWIN GATES", "budget": 7228003.12, "actual": 6074694.36, "ach": 84.0}], "q3": [{"name": "BROOKLYN CLOCK TOWER", "budget": 11922317.75, "actual": 5858350.48, "ach": 49.1}, {"name": "BROOKLYN TWIN GATES", "budget": 9879169.22, "actual": 5638755.29, "ach": 57.1}]}}, {"id": "C000000243", "name": "ANDY CHEN MOBAY", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "andy243", "q1": {"budget": 23923619.25, "actual": 14867566.48, "ach": 62.1, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 478472.39, "amt_to_qualify": 9056052.77, "rank": 15, "total_n": 18}, "q2": {"budget": 14868252.37, "actual": 15902897.0, "ach": 107.0, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 318057.94, "reward_at_100": 297365.05, "amt_to_qualify": 0, "rank": 2, "total_n": 18}, "q3": {"budget": 16841062.37, "actual": 17744629.78, "ach": 105.4, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 354892.6, "reward_at_100": 336821.25, "amt_to_qualify": 0, "rank": 1, "total_n": 18}}, {"id": "intown", "name": "INTOWN GROUP", "portfolio": "Key", "is_group": true, "n_stores": 2, "passcode": "intown002", "q1": {"budget": 13748462.34, "actual": 13171711.7, "ach": 95.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 274969.25, "amt_to_qualify": 576750.64, "rank": 6, "total_n": 18}, "q2": {"budget": 13241311.12, "actual": 12236486.03, "ach": 92.4, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 264826.22, "amt_to_qualify": 1004825.09, "rank": 7, "total_n": 18}, "q3": {"budget": 16799958.79, "actual": 10464052.89, "ach": 62.3, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 335999.18, "amt_to_qualify": 6335905.9, "rank": 8, "total_n": 18}, "stores": {"q1": [{"name": "INTOWN SUPA SAVE SANTA", "budget": 9459554.61, "actual": 9204789.53, "ach": 97.3}, {"name": "INTOWN SUPER SAVE B RIVER", "budget": 4288907.73, "actual": 3966922.17, "ach": 92.5}], "q2": [{"name": "INTOWN SUPA SAVE SANTA", "budget": 8494776.14, "actual": 9181135.16, "ach": 108.1}, {"name": "INTOWN SUPER SAVE B RIVER", "budget": 4746534.98, "actual": 3055350.87, "ach": 64.4}], "q3": [{"name": "INTOWN SUPA SAVE SANTA", "budget": 12214902.92, "actual": 7608326.4, "ach": 62.3}, {"name": "INTOWN SUPER SAVE B RIVER", "budget": 4585055.87, "actual": 2855726.49, "ach": 62.3}]}}, {"id": "lees", "name": "LEE'S FOOD FAIR GROUP", "portfolio": "Key", "is_group": true, "n_stores": 2, "passcode": "lees003", "q1": {"budget": 7958661.86, "actual": 7501411.09, "ach": 94.3, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 159173.24, "amt_to_qualify": 457250.77, "rank": 8, "total_n": 18}, "q2": {"budget": 13593972.88, "actual": 11531684.79, "ach": 84.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 271879.46, "amt_to_qualify": 2062288.09, "rank": 9, "total_n": 18}, "q3": {"budget": 15269483.5, "actual": 9561116.8, "ach": 62.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 305389.67, "amt_to_qualify": 5708366.7, "rank": 7, "total_n": 18}, "stores": {"q1": [{"name": "LEES FOOD FAIR RED HILLS ROAD", "budget": 5261408.82, "actual": 6439578.55, "ach": 122.4}, {"name": "LEES FOOD FAIR BOULEVARD", "budget": 2697253.04, "actual": 1061832.54, "ach": 39.4}], "q2": [{"name": "LEES FOOD FAIR RED HILLS ROAD", "budget": 10933905.99, "actual": 9453344.65, "ach": 86.5}, {"name": "LEES FOOD FAIR BOULEVARD", "budget": 2660066.89, "actual": 2078340.14, "ach": 78.1}], "q3": [{"name": "LEES FOOD FAIR RED HILLS ROAD", "budget": 12587302.3, "actual": 7673936.37, "ach": 61.0}, {"name": "LEES FOOD FAIR BOULEVARD", "budget": 2682181.2, "actual": 1887180.43, "ach": 70.4}]}}, {"id": "sampars_select", "name": "SAMPARS GROUP", "portfolio": "Chain", "is_group": true, "n_stores": 9, "passcode": "sampars008", "q1": {"budget": 8801673.79, "actual": 10927526.5, "ach": 124.2, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 218550.53, "reward_at_100": 176033.48, "amt_to_qualify": 0, "rank": 2, "total_n": 18}, "q2": {"budget": 10765766.82, "actual": 4243598.11, "ach": 39.4, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 215315.34, "amt_to_qualify": 6522168.71, "rank": 16, "total_n": 18}, "q3": {"budget": 14923745.94, "actual": 6372879.31, "ach": 42.7, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 298474.92, "amt_to_qualify": 8550866.63, "rank": 17, "total_n": 18}, "stores": {"q1": [{"name": "SELECT GROCERS SUPERMARKET", "budget": 2796868.72, "actual": 4513411.66, "ach": 161.4}, {"name": "SAMPARS CASH & CARRY CROSS ROADS", "budget": 1510622.97, "actual": 1697153.81, "ach": 112.3}, {"name": "SAMPARS CASH & CARRY OLD HARBOUR", "budget": 2084780.38, "actual": 2337846.54, "ach": 112.1}, {"name": "SAMPARS T/A SELECT GROCERS", "budget": 1369251.97, "actual": 1869933.5, "ach": 136.6}, {"name": "SAMPARS CASH & CARRY", "budget": 329256.66, "actual": 317884.55, "ach": 96.5}, {"name": "SAMPARS CASH & CARRY ST ANNS BAY", "budget": 648729.34, "actual": 0.0, "ach": 0.0}, {"name": "SAMPARS SUPERMARKET BLVD", "budget": 62163.75, "actual": 191296.44, "ach": 307.7}, {"name": "SAMPARS CASH & CARRY DOWNTOWN", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SELECT BRANDS.", "budget": 0.0, "actual": 0.0, "ach": null}], "q2": [{"name": "SELECT GROCERS SUPERMARKET", "budget": 4066441.76, "actual": 1861431.8, "ach": 45.8}, {"name": "SAMPARS CASH & CARRY CROSS ROADS", "budget": 1364512.71, "actual": 1330636.21, "ach": 97.5}, {"name": "SAMPARS CASH & CARRY OLD HARBOUR", "budget": 2200606.58, "actual": 689654.39, "ach": 31.3}, {"name": "SAMPARS T/A SELECT GROCERS", "budget": 1878252.7, "actual": 0.0, "ach": 0.0}, {"name": "SAMPARS CASH & CARRY", "budget": 501460.42, "actual": 361875.71, "ach": 72.2}, {"name": "SAMPARS CASH & CARRY ST ANNS BAY", "budget": 721268.81, "actual": 0.0, "ach": 0.0}, {"name": "SAMPARS SUPERMARKET BLVD", "budget": 33223.84, "actual": 0.0, "ach": 0.0}, {"name": "SAMPARS CASH & CARRY DOWNTOWN", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SELECT BRANDS.", "budget": 0.0, "actual": 0.0, "ach": null}], "q3": [{"name": "SELECT GROCERS SUPERMARKET", "budget": 4748285.17, "actual": 1785635.94, "ach": 37.6}, {"name": "SAMPARS CASH & CARRY CROSS ROADS", "budget": 4084924.73, "actual": 1441281.95, "ach": 35.3}, {"name": "SAMPARS CASH & CARRY OLD HARBOUR", "budget": 2635686.09, "actual": 903505.59, "ach": 34.3}, {"name": "SAMPARS T/A SELECT GROCERS", "budget": 2536242.29, "actual": 929140.99, "ach": 36.6}, {"name": "SAMPARS CASH & CARRY", "budget": 545609.39, "actual": 1313314.84, "ach": 240.7}, {"name": "SAMPARS CASH & CARRY ST ANNS BAY", "budget": 240608.42, "actual": 0.0, "ach": 0.0}, {"name": "SAMPARS SUPERMARKET BLVD", "budget": 132389.85, "actual": 0.0, "ach": 0.0}, {"name": "SAMPARS CASH & CARRY DOWNTOWN", "budget": 0.0, "actual": 0.0, "ach": null}, {"name": "SELECT BRANDS.", "budget": 0.0, "actual": 0.0, "ach": null}]}}, {"id": "master_mac", "name": "MASTER MAC GROUP", "portfolio": "Key", "is_group": true, "n_stores": 4, "passcode": "mastermac001", "q1": {"budget": 12786203.99, "actual": 13139637.53, "ach": 102.8, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 262792.75, "reward_at_100": 255724.08, "amt_to_qualify": 0, "rank": 5, "total_n": 18}, "q2": {"budget": 11743483.57, "actual": 12513287.3, "ach": 106.6, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 250265.75, "reward_at_100": 234869.67, "amt_to_qualify": 0, "rank": 3, "total_n": 18}, "q3": {"budget": 13864681.32, "actual": 11870067.76, "ach": 85.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 277293.63, "amt_to_qualify": 1994613.56, "rank": 2, "total_n": 18}, "stores": {"q1": [{"name": "MASTER MAC MANDEVILLE", "budget": 6195967.1, "actual": 5161138.52, "ach": 83.3}, {"name": "MASTER MAC FOOD STORE", "budget": 4763807.53, "actual": 4356196.87, "ach": 91.4}, {"name": "MASTER MAC STONY HILL", "budget": 1826429.36, "actual": 1812029.73, "ach": 99.2}, {"name": "MASTER MAC FOOD STORE- SUPERMARKET CONSTANT SPRING", "budget": 0.0, "actual": 1810272.41, "ach": null}], "q2": [{"name": "MASTER MAC MANDEVILLE", "budget": 5778261.12, "actual": 5573498.11, "ach": 96.5}, {"name": "MASTER MAC FOOD STORE", "budget": 4372359.22, "actual": 3549804.39, "ach": 81.2}, {"name": "MASTER MAC STONY HILL", "budget": 1592863.23, "actual": 1598010.1, "ach": 100.3}, {"name": "MASTER MAC FOOD STORE- SUPERMARKET CONSTANT SPRING", "budget": 0.0, "actual": 1791974.7, "ach": null}], "q3": [{"name": "MASTER MAC MANDEVILLE", "budget": 6655000.67, "actual": 4205334.86, "ach": 63.2}, {"name": "MASTER MAC FOOD STORE", "budget": 5062937.82, "actual": 3057323.2, "ach": 60.4}, {"name": "MASTER MAC STONY HILL", "budget": 2146742.83, "actual": 1921790.38, "ach": 89.5}, {"name": "MASTER MAC FOOD STORE- SUPERMARKET CONSTANT SPRING", "budget": 0.0, "actual": 2685619.32, "ach": null}]}}, {"id": "C000001689", "name": "GENERAL FOODS LIGUANEA", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "general689", "q1": {"budget": 9956599.52, "actual": 6523180.65, "ach": 65.5, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 199131.99, "amt_to_qualify": 3433418.87, "rank": 14, "total_n": 18}, "q2": {"budget": 11072068.91, "actual": 7289464.22, "ach": 65.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 221441.38, "amt_to_qualify": 3782604.69, "rank": 13, "total_n": 18}, "q3": {"budget": 11660507.75, "actual": 6616598.93, "ach": 56.7, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 233210.15, "amt_to_qualify": 5043908.82, "rank": 11, "total_n": 18}}, {"id": "C000002896", "name": "MAP WHOLESALE LIONEL TOWN", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "map896", "q1": {"budget": 8294162.67, "actual": 11682291.63, "ach": 140.8, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 233645.83, "reward_at_100": 165883.25, "amt_to_qualify": 0, "rank": 1, "total_n": 18}, "q2": {"budget": 12888851.92, "actual": 4459574.87, "ach": 34.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 257777.04, "amt_to_qualify": 8429277.05, "rank": 17, "total_n": 18}, "q3": {"budget": 11138525.53, "actual": 6466429.24, "ach": 58.1, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 222770.51, "amt_to_qualify": 4672096.29, "rank": 10, "total_n": 18}}, {"id": "C000000762", "name": "CHANG'S TRADING", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "changs762", "q1": {"budget": 8793265.38, "actual": 7970243.76, "ach": 90.6, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 175865.31, "amt_to_qualify": 823021.62, "rank": 10, "total_n": 18}, "q2": {"budget": 8958969.15, "actual": 7504876.08, "ach": 83.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 179179.38, "amt_to_qualify": 1454093.07, "rank": 10, "total_n": 18}, "q3": {"budget": 9660256.06, "actual": 4524384.61, "ach": 46.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 193205.12, "amt_to_qualify": 5135871.45, "rank": 14, "total_n": 18}}, {"id": "C000005577", "name": "MARGARITAVILLE LIMITED", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "margaritaville577", "q1": {"budget": 5241811.35, "actual": 5672339.77, "ach": 108.2, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 85085.1, "reward_at_100": 78627.17, "amt_to_qualify": 0, "rank": 3, "total_n": 18}, "q2": {"budget": 5825263.01, "actual": 7308673.07, "ach": 125.5, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 109630.1, "reward_at_100": 87378.95, "amt_to_qualify": 0, "rank": 2, "total_n": 18}, "q3": {"budget": 8868547.64, "actual": 5886462.14, "ach": 66.4, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 177370.95, "amt_to_qualify": 2982085.5, "rank": 6, "total_n": 18}}, {"id": "C000005640", "name": "S K D WHOLESALE SAV", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "wholesale640", "q1": {"budget": 6959918.34, "actual": 10328818.19, "ach": 148.4, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 154932.27, "reward_at_100": 104398.78, "amt_to_qualify": 0, "rank": 1, "total_n": 18}, "q2": {"budget": 7144217.04, "actual": 6077965.98, "ach": 85.1, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 142884.34, "amt_to_qualify": 1066251.06, "rank": 8, "total_n": 18}, "q3": {"budget": 8826491.57, "actual": 3864133.36, "ach": 43.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 176529.83, "amt_to_qualify": 4962358.21, "rank": 16, "total_n": 18}}, {"id": "C000005049", "name": "URVILLS SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "urvills049", "q1": {"budget": 10250003.82, "actual": 8215681.62, "ach": 80.2, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 205000.08, "amt_to_qualify": 2034322.2, "rank": 12, "total_n": 18}, "q2": {"budget": 11480801.38, "actual": 10820028.26, "ach": 94.2, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 229616.03, "amt_to_qualify": 660773.12, "rank": 5, "total_n": 18}, "q3": {"budget": 8462487.62, "actual": 5820854.9, "ach": 68.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 169249.75, "amt_to_qualify": 2641632.72, "rank": 4, "total_n": 18}}, {"id": "C000000446", "name": "BESTCO SUPERMARKET-SAV", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "bestco446", "q1": {"budget": 6737335.27, "actual": 6513273.9, "ach": 96.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 101060.03, "amt_to_qualify": 224061.37, "rank": 6, "total_n": 18}, "q2": {"budget": 6134606.64, "actual": 6098477.6, "ach": 99.4, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 92019.1, "amt_to_qualify": 36129.04, "rank": 6, "total_n": 18}, "q3": {"budget": 8121023.57, "actual": 3580417.2, "ach": 44.1, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 162420.47, "amt_to_qualify": 4540606.37, "rank": 15, "total_n": 18}}, {"id": "C000003774", "name": "PRICE GEL SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "price774", "q1": {"budget": 6347352.42, "actual": 3088618.43, "ach": 48.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 95210.29, "amt_to_qualify": 3258733.99, "rank": 16, "total_n": 18}, "q2": {"budget": 6592205.57, "actual": 5593891.71, "ach": 84.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 98883.08, "amt_to_qualify": 998313.86, "rank": 11, "total_n": 18}, "q3": {"budget": 7921114.45, "actual": 3167692.23, "ach": 40.0, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 158422.29, "amt_to_qualify": 4753422.22, "rank": 18, "total_n": 18}}, {"id": "megamart", "name": "MEGAMART GROUP", "portfolio": "Chain", "is_group": true, "n_stores": 2, "passcode": "megamart006", "q1": {"budget": 9473311.44, "actual": 10668630.09, "ach": 112.6, "band": "Platinum", "rate": 0.02, "qualifies": true, "rebate": 213372.6, "reward_at_100": 189466.23, "amt_to_qualify": 0, "rank": 4, "total_n": 18}, "q2": {"budget": 14334967.1, "actual": 7953546.88, "ach": 55.5, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 286699.34, "amt_to_qualify": 6381420.22, "rank": 15, "total_n": 18}, "q3": {"budget": 7756668.3, "actual": 6644444.62, "ach": 85.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 116350.02, "amt_to_qualify": 1112223.68, "rank": 6, "total_n": 18}, "stores": {"q1": [{"name": "MEGAMART KINGSTON", "budget": 7231270.49, "actual": 7740914.86, "ach": 107.0}, {"name": "MEGAMART MANDEVILLE", "budget": 2242040.95, "actual": 2927715.23, "ach": 130.6}], "q2": [{"name": "MEGAMART KINGSTON", "budget": 11460863.74, "actual": 5597603.65, "ach": 48.8}, {"name": "MEGAMART MANDEVILLE", "budget": 2874103.36, "actual": 2355943.23, "ach": 82.0}], "q3": [{"name": "MEGAMART KINGSTON", "budget": 5247426.67, "actual": 4781819.66, "ach": 91.1}, {"name": "MEGAMART MANDEVILLE", "budget": 2509241.63, "actual": 1862624.96, "ach": 74.2}]}}, {"id": "C000004565", "name": "STOPLIGHT WHOLESALE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "stoplight565", "q1": {"budget": 7168483.25, "actual": 7429904.42, "ach": 103.6, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 111448.57, "reward_at_100": 107527.25, "amt_to_qualify": 0, "rank": 5, "total_n": 18}, "q2": {"budget": 6910582.84, "actual": 4760683.55, "ach": 68.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 103658.74, "amt_to_qualify": 2149899.29, "rank": 13, "total_n": 18}, "q3": {"budget": 7378566.57, "actual": 6851431.08, "ach": 92.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 110678.5, "amt_to_qualify": 527135.49, "rank": 4, "total_n": 18}}, {"id": "C000002706", "name": "LI'S WHOLESALE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "lis706", "q1": {"budget": 7847892.65, "actual": 4480292.54, "ach": 57.1, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 156957.85, "amt_to_qualify": 3367600.11, "rank": 16, "total_n": 18}, "q2": {"budget": 5047018.99, "actual": 7029431.9, "ach": 139.3, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 105441.48, "reward_at_100": 75705.28, "amt_to_qualify": 0, "rank": 1, "total_n": 18}, "q3": {"budget": 6880923.11, "actual": 4397298.54, "ach": 63.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 103213.85, "amt_to_qualify": 2483624.57, "rank": 12, "total_n": 18}}, {"id": "C000001627", "name": "FRESH VALU SUPERMARKET/GRACE CHAE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "fresh627", "q1": {"budget": 6173655.53, "actual": 5673072.64, "ach": 91.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 92604.83, "amt_to_qualify": 500582.89, "rank": 9, "total_n": 18}, "q2": {"budget": 4319746.29, "actual": 5626482.64, "ach": 130.3, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 56264.83, "reward_at_100": 43197.46, "amt_to_qualify": 0, "rank": 3, "total_n": 18}, "q3": {"budget": 6445554.67, "actual": 5010254.64, "ach": 77.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 96683.32, "amt_to_qualify": 1435300.03, "rank": 9, "total_n": 18}}, {"id": "C000002795", "name": "LOSHUSAN SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "loshusan795", "q1": {"budget": 4441742.25, "actual": 4216298.74, "ach": 94.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 66626.13, "amt_to_qualify": 225443.51, "rank": 7, "total_n": 18}, "q2": {"budget": 5147381.79, "actual": 6114033.62, "ach": 118.8, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 91710.5, "reward_at_100": 77210.73, "amt_to_qualify": 0, "rank": 3, "total_n": 18}, "q3": {"budget": 6264890.81, "actual": 3891678.99, "ach": 62.1, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 93973.36, "amt_to_qualify": 2373211.82, "rank": 13, "total_n": 18}}, {"id": "C000004805", "name": "TESCO C/O W & L FALMOUTH", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "tesco805", "q1": {"budget": 5842566.37, "actual": 3854658.56, "ach": 66.0, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 87638.5, "amt_to_qualify": 1987907.81, "rank": 13, "total_n": 18}, "q2": {"budget": 4065634.79, "actual": 5072042.44, "ach": 124.8, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 50720.42, "reward_at_100": 40656.35, "amt_to_qualify": 0, "rank": 4, "total_n": 18}, "q3": {"budget": 6032706.96, "actual": 6488565.99, "ach": 107.6, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 97328.49, "reward_at_100": 90490.6, "amt_to_qualify": 0, "rank": 2, "total_n": 18}}, {"id": "C000002794", "name": "LOSHUSAN NEW KINGSTON/ JOHN R WONG", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "loshusan794", "q1": {"budget": 3633778.37, "actual": 4366949.67, "ach": 120.2, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 43669.5, "reward_at_100": 36337.78, "amt_to_qualify": 0, "rank": 2, "total_n": 18}, "q2": {"budget": 4609749.02, "actual": 4092245.36, "ach": 88.8, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 69146.24, "amt_to_qualify": 517503.66, "rank": 10, "total_n": 18}, "q3": {"budget": 5901333.6, "actual": 2656060.88, "ach": 45.0, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 88520.0, "amt_to_qualify": 3245272.72, "rank": 17, "total_n": 18}}, {"id": "C000001656", "name": "G & L WHOLESALE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "wholesale656", "q1": {"budget": 3756620.38, "actual": 4098561.71, "ach": 109.1, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 40985.62, "reward_at_100": 37566.2, "amt_to_qualify": 0, "rank": 5, "total_n": 18}, "q2": {"budget": 6395347.9, "actual": 6142228.55, "ach": 96.0, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 95930.22, "amt_to_qualify": 253119.35, "rank": 7, "total_n": 18}, "q3": {"budget": 5801216.4, "actual": 3165499.31, "ach": 54.6, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 87018.25, "amt_to_qualify": 2635717.09, "rank": 16, "total_n": 18}}, {"id": "C000000441", "name": "BEST VALUE SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "best441", "q1": {"budget": 5685631.76, "actual": 3328603.42, "ach": 58.5, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 85284.48, "amt_to_qualify": 2357028.34, "rank": 14, "total_n": 18}, "q2": {"budget": 6454818.66, "actual": 3762769.89, "ach": 58.3, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 96822.28, "amt_to_qualify": 2692048.77, "rank": 14, "total_n": 18}, "q3": {"budget": 5512170.13, "actual": 4320535.12, "ach": 78.4, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 82682.55, "amt_to_qualify": 1191635.01, "rank": 8, "total_n": 18}}, {"id": "C000000803", "name": "CHERRIE'S SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "cherries803", "q1": {"budget": 4116921.1, "actual": 6533253.71, "ach": 158.7, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 65332.54, "reward_at_100": 41169.21, "amt_to_qualify": 0, "rank": 1, "total_n": 18}, "q2": {"budget": 7869431.8, "actual": 4544688.15, "ach": 57.8, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 157388.64, "amt_to_qualify": 3324743.65, "rank": 14, "total_n": 18}, "q3": {"budget": 5509167.35, "actual": 4690886.03, "ach": 85.1, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 82637.51, "amt_to_qualify": 818281.32, "rank": 7, "total_n": 18}}, {"id": "C000000942", "name": "CONSUMER MEAT PLUS CO. LTD", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "consumer942", "q1": {"budget": 3481754.85, "actual": 2352090.22, "ach": 67.6, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 34817.55, "amt_to_qualify": 1129664.63, "rank": 16, "total_n": 18}, "q2": {"budget": 4353158.51, "actual": 5146833.84, "ach": 118.2, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 51468.34, "reward_at_100": 43531.59, "amt_to_qualify": 0, "rank": 6, "total_n": 18}, "q3": {"budget": 5364963.6, "actual": 3777171.91, "ach": 70.4, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 80474.45, "amt_to_qualify": 1587791.69, "rank": 11, "total_n": 18}}, {"id": "C000004664", "name": "SUPERMARKET MANELLI LIMITED", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "supermarket664", "q1": {"budget": 3929507.38, "actual": 3964422.26, "ach": 100.9, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 39644.22, "reward_at_100": 39295.07, "amt_to_qualify": 0, "rank": 10, "total_n": 18}, "q2": {"budget": 5031112.17, "actual": 5786229.83, "ach": 115.0, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 86793.45, "reward_at_100": 75466.68, "amt_to_qualify": 0, "rank": 4, "total_n": 18}, "q3": {"budget": 5285278.2, "actual": 2905649.06, "ach": 55.0, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 79279.17, "amt_to_qualify": 2379629.14, "rank": 15, "total_n": 18}}, {"id": "C000003856", "name": "RAINFOREST SEAFOODS", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "rainforest856", "q1": {"budget": 3767757.01, "actual": 4047205.91, "ach": 107.4, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 40472.06, "reward_at_100": 37677.57, "amt_to_qualify": 0, "rank": 6, "total_n": 18}, "q2": {"budget": 4799472.61, "actual": 4429190.49, "ach": 92.3, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 71992.09, "amt_to_qualify": 370282.12, "rank": 8, "total_n": 18}, "q3": {"budget": 5059374.8, "actual": 2815006.11, "ach": 55.6, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 75890.62, "amt_to_qualify": 2244368.69, "rank": 14, "total_n": 18}}, {"id": "C000005934", "name": "BARGAINS WHOLESALE & SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "bargains934", "q1": {"budget": 3186079.74, "actual": 2542145.89, "ach": 79.8, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 31860.8, "amt_to_qualify": 643933.85, "rank": 14, "total_n": 18}, "q2": {"budget": 4341552.33, "actual": 862710.83, "ach": 19.9, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 43415.52, "amt_to_qualify": 3478841.5, "rank": 18, "total_n": 18}, "q3": {"budget": 4996300.54, "actual": 513858.22, "ach": 10.3, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 74944.51, "amt_to_qualify": 4482442.32, "rank": 18, "total_n": 18}}, {"id": "C000003934", "name": "REXO SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "rexo934", "q1": {"budget": 6985665.25, "actual": 3022493.01, "ach": 43.3, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 104784.98, "amt_to_qualify": 3963172.24, "rank": 17, "total_n": 18}, "q2": {"budget": 4946398.26, "actual": 1952184.05, "ach": 39.5, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 74195.97, "amt_to_qualify": 2994214.21, "rank": 18, "total_n": 18}, "q3": {"budget": 4991444.0, "actual": 5359340.76, "ach": 107.4, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 80390.11, "reward_at_100": 74871.66, "amt_to_qualify": 0, "rank": 3, "total_n": 18}}, {"id": "C000005356", "name": "YUNS SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "yuns356", "q1": {"budget": 4584041.89, "actual": 4893419.98, "ach": 106.7, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 73401.3, "reward_at_100": 68760.63, "amt_to_qualify": 0, "rank": 4, "total_n": 18}, "q2": {"budget": 3922996.12, "actual": 5190501.28, "ach": 132.3, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 51905.01, "reward_at_100": 39229.96, "amt_to_qualify": 0, "rank": 2, "total_n": 18}, "q3": {"budget": 4858051.3, "actual": 3626476.56, "ach": 74.6, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 72870.77, "amt_to_qualify": 1231574.74, "rank": 10, "total_n": 18}}, {"id": "C000005725", "name": "JOONG PORTMORE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "joong725", "q1": {"budget": 4485145.38, "actual": 5110315.43, "ach": 113.9, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 76654.73, "reward_at_100": 67277.18, "amt_to_qualify": 0, "rank": 2, "total_n": 18}, "q2": {"budget": 5267371.56, "actual": 2968850.28, "ach": 56.4, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 79010.57, "amt_to_qualify": 2298521.28, "rank": 15, "total_n": 18}, "q3": {"budget": 4661948.13, "actual": 4019525.21, "ach": 86.2, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 69929.22, "amt_to_qualify": 642422.92, "rank": 5, "total_n": 18}}, {"id": "C000000045", "name": "348 SUPERMARKET LTD", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "348045", "q1": {"budget": 6999878.52, "actual": 3980839.33, "ach": 56.9, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 104998.18, "amt_to_qualify": 3019039.19, "rank": 15, "total_n": 18}, "q2": {"budget": 4367015.46, "actual": 4611276.22, "ach": 105.6, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 46112.76, "reward_at_100": 43670.15, "amt_to_qualify": 0, "rank": 7, "total_n": 18}, "q3": {"budget": 4618529.32, "actual": 5414504.9, "ach": 117.2, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 81217.57, "reward_at_100": 69277.94, "amt_to_qualify": 0, "rank": 1, "total_n": 18}}, {"id": "C000002734", "name": "LINS LIMITED ANCHOVY", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "lins734", "q1": {"budget": 16591375.21, "actual": 5391262.17, "ach": 32.5, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 331827.5, "amt_to_qualify": 11200113.04, "rank": 18, "total_n": 18}, "q2": {"budget": 5618050.46, "actual": 5039555.6, "ach": 89.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 84270.76, "amt_to_qualify": 578494.86, "rank": 9, "total_n": 18}, "q3": {"budget": 4581801.76, "actual": 2289074.0, "ach": 50.0, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 45818.02, "amt_to_qualify": 2292727.76, "rank": 13, "total_n": 18}}, {"id": "C000000758", "name": "CHAMPION SUPERMARKET-FALMOUTH", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "champion758", "q1": {"budget": 2624492.23, "actual": 2778905.95, "ach": 105.9, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 27789.06, "reward_at_100": 26244.92, "amt_to_qualify": 0, "rank": 9, "total_n": 18}, "q2": {"budget": 4424410.81, "actual": 4451073.86, "ach": 100.6, "band": "Gold", "rate": 0.015, "qualifies": true, "rebate": 66766.11, "reward_at_100": 66366.16, "amt_to_qualify": 0, "rank": 5, "total_n": 18}, "q3": {"budget": 4408641.52, "actual": 2790500.5, "ach": 63.3, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 44086.42, "amt_to_qualify": 1618141.02, "rank": 10, "total_n": 18}}, {"id": "C000001972", "name": "HOSKIN SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "hoskin972", "q1": {"budget": 2982923.35, "actual": 2963926.7, "ach": 99.4, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 29829.23, "amt_to_qualify": 18996.65, "rank": 11, "total_n": 18}, "q2": {"budget": 2817316.43, "actual": 3512678.31, "ach": 124.7, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 35126.78, "reward_at_100": 28173.16, "amt_to_qualify": 0, "rank": 5, "total_n": 18}, "q3": {"budget": 4400800.99, "actual": 2113988.14, "ach": 48.0, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 44008.01, "amt_to_qualify": 2286812.85, "rank": 14, "total_n": 18}}, {"id": "C000004990", "name": "TRUE FLAVA GROCERIES/FOR EVER GREEN #2", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "true990", "q1": {"budget": 7273146.36, "actual": 2961663.22, "ach": 40.7, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 145462.93, "amt_to_qualify": 4311483.14, "rank": 17, "total_n": 18}, "q2": {"budget": 3085307.99, "actual": 1057983.16, "ach": 34.3, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 30853.08, "amt_to_qualify": 2027324.83, "rank": 17, "total_n": 18}, "q3": {"budget": 3870870.47, "actual": 1630714.0, "ach": 42.1, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 38708.7, "amt_to_qualify": 2240156.47, "rank": 16, "total_n": 18}}, {"id": "C000002990", "name": "MAX VALUE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "max990", "q1": {"budget": 5323577.56, "actual": 3650204.27, "ach": 68.6, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 79853.66, "amt_to_qualify": 1673373.29, "rank": 12, "total_n": 18}, "q2": {"budget": 3799090.23, "actual": 2955896.33, "ach": 77.8, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 37990.9, "amt_to_qualify": 843193.9, "rank": 11, "total_n": 18}, "q3": {"budget": 3841234.67, "actual": 2617976.74, "ach": 68.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 38412.35, "amt_to_qualify": 1223257.93, "rank": 8, "total_n": 18}}, {"id": "C000000081", "name": "A & J RAMTULLA ENTERPRISE LIMITED", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "ramtulla081", "q1": {"budget": 2656565.07, "actual": 2306445.77, "ach": 86.8, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 26565.65, "amt_to_qualify": 350119.3, "rank": 13, "total_n": 18}, "q2": {"budget": 5629994.2, "actual": 2635661.11, "ach": 46.8, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 84449.91, "amt_to_qualify": 2994333.09, "rank": 17, "total_n": 18}, "q3": {"budget": 3794153.32, "actual": 3170886.87, "ach": 83.6, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 37941.53, "amt_to_qualify": 623266.45, "rank": 2, "total_n": 18}}, {"id": "C000001490", "name": "FAMILY PRIDE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "family490", "q1": {"budget": 4387248.63, "actual": 3995474.21, "ach": 91.1, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 65808.73, "amt_to_qualify": 391774.42, "rank": 11, "total_n": 18}, "q2": {"budget": 4213587.49, "actual": 2577471.8, "ach": 61.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 42135.87, "amt_to_qualify": 1636115.69, "rank": 15, "total_n": 18}, "q3": {"budget": 3688869.99, "actual": 2494109.41, "ach": 67.6, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 36888.7, "amt_to_qualify": 1194760.58, "rank": 9, "total_n": 18}}, {"id": "C000004462", "name": "SOVEREIGN SUPERMARKET-LIGUANEA", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "sovereign462", "q1": {"budget": 2725047.78, "actual": 2993098.28, "ach": 109.8, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 29930.98, "reward_at_100": 27250.48, "amt_to_qualify": 0, "rank": 4, "total_n": 18}, "q2": {"budget": 2185103.07, "actual": 1497742.44, "ach": 68.5, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 21851.03, "amt_to_qualify": 687360.63, "rank": 13, "total_n": 18}, "q3": {"budget": 3665562.46, "actual": 1936623.16, "ach": 52.8, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 36655.62, "amt_to_qualify": 1728939.3, "rank": 11, "total_n": 18}}, {"id": "C000001704", "name": "GIBBO TRADING-HARBOUR STREET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "gibbo704", "q1": {"budget": 2394711.5, "actual": 1525914.07, "ach": 63.7, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 23947.12, "amt_to_qualify": 868797.43, "rank": 18, "total_n": 18}, "q2": {"budget": 1914179.55, "actual": 1287093.76, "ach": 67.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 19141.8, "amt_to_qualify": 627085.79, "rank": 14, "total_n": 18}, "q3": {"budget": 3659812.59, "actual": 1606559.57, "ach": 43.9, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 36598.13, "amt_to_qualify": 2053253.02, "rank": 15, "total_n": 18}}, {"id": "C000007120", "name": "CHENMART SUPERMARKET & HABERDASHERY", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "chenmart120", "q1": {"budget": 4247726.34, "actual": 3894770.41, "ach": 91.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 63715.9, "amt_to_qualify": 352955.93, "rank": 10, "total_n": 18}, "q2": {"budget": 5913838.1, "actual": 4477334.0, "ach": 75.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 88707.57, "amt_to_qualify": 1436504.1, "rank": 12, "total_n": 18}, "q3": {"budget": 3643227.09, "actual": 2543362.35, "ach": 69.8, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 36432.27, "amt_to_qualify": 1099864.74, "rank": 5, "total_n": 18}}, {"id": "C000001703", "name": "GIANT FAMILY MART LTD", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "giant703", "q1": {"budget": 3453449.18, "actual": 2497490.08, "ach": 72.3, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 34534.49, "amt_to_qualify": 955959.1, "rank": 15, "total_n": 18}, "q2": {"budget": 2862336.75, "actual": 2078433.74, "ach": 72.6, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 28623.37, "amt_to_qualify": 783903.01, "rank": 12, "total_n": 18}, "q3": {"budget": 3561773.94, "actual": 1850380.42, "ach": 52.0, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 35617.74, "amt_to_qualify": 1711393.52, "rank": 12, "total_n": 18}}, {"id": "C000000757", "name": "CHAMPION SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "champion757", "q1": {"budget": 4291617.19, "actual": 4020555.43, "ach": 93.7, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 64374.26, "amt_to_qualify": 271061.76, "rank": 8, "total_n": 18}, "q2": {"budget": 5648591.69, "actual": 2797672.77, "ach": 49.5, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 84728.88, "amt_to_qualify": 2850918.92, "rank": 16, "total_n": 18}, "q3": {"budget": 3399940.92, "actual": 2343035.5, "ach": 68.9, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 33999.41, "amt_to_qualify": 1056905.42, "rank": 7, "total_n": 18}}, {"id": "C000002523", "name": "KIND SUPERMARKET LTD", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "kind523", "q1": {"budget": 3689787.57, "actual": 3920012.12, "ach": 106.2, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 39200.12, "reward_at_100": 36897.88, "amt_to_qualify": 0, "rank": 8, "total_n": 18}, "q2": {"budget": 3262166.49, "actual": 3008707.64, "ach": 92.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 32621.66, "amt_to_qualify": 253458.85, "rank": 10, "total_n": 18}, "q3": {"budget": 3286391.15, "actual": 2665641.8, "ach": 81.1, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 32863.91, "amt_to_qualify": 620749.35, "rank": 3, "total_n": 18}}, {"id": "C000002731", "name": "LING FEI WHOLESALE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "ling731", "q1": {"budget": 1720166.75, "actual": 2027784.59, "ach": 117.9, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 20277.85, "reward_at_100": 17201.67, "amt_to_qualify": 0, "rank": 3, "total_n": 18}, "q2": {"budget": 2220320.65, "actual": 934986.31, "ach": 42.1, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 22203.21, "amt_to_qualify": 1285334.34, "rank": 16, "total_n": 18}, "q3": {"budget": 2797819.14, "actual": 313714.08, "ach": 11.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 27978.19, "amt_to_qualify": 2484105.06, "rank": 17, "total_n": 18}}, {"id": "C000003563", "name": "ORION WHOLESALE", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "orion563", "q1": {"budget": 3130891.53, "actual": 3349744.77, "ach": 107.0, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 33497.45, "reward_at_100": 31308.92, "amt_to_qualify": 0, "rank": 7, "total_n": 18}, "q2": {"budget": 4321933.88, "actual": 4092394.54, "ach": 94.7, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 43219.34, "amt_to_qualify": 229539.34, "rank": 8, "total_n": 18}, "q3": {"budget": 2584715.98, "actual": 2073371.56, "ach": 80.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 25847.16, "amt_to_qualify": 511344.42, "rank": 4, "total_n": 18}}, {"id": "C000005724", "name": "GENERAL FOODS SUPERMARKET", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "general724", "q1": {"budget": 2273304.63, "actual": 2250496.77, "ach": 99.0, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 22733.05, "amt_to_qualify": 22807.86, "rank": 12, "total_n": 18}, "q2": {"budget": 2450225.62, "actual": 2309179.95, "ach": 94.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 24502.26, "amt_to_qualify": 141045.67, "rank": 9, "total_n": 18}, "q3": {"budget": 2497216.59, "actual": 1725243.4, "ach": 69.1, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 24972.17, "amt_to_qualify": 771973.19, "rank": 6, "total_n": 18}}, {"id": "C000005228", "name": "WIN WIN WORLDWIDE INTERNATIONAL", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "win228", "q1": {"budget": 6518697.7, "actual": 2120184.8, "ach": 32.5, "band": "Gold", "rate": 0.015, "qualifies": false, "rebate": 0, "reward_at_100": 97780.47, "amt_to_qualify": 4398512.9, "rank": 18, "total_n": 18}, "q2": {"budget": 11895248.2, "actual": 488458.0, "ach": 4.1, "band": "Platinum", "rate": 0.02, "qualifies": false, "rebate": 0, "reward_at_100": 237904.96, "amt_to_qualify": 11406790.2, "rank": 18, "total_n": 18}, "q3": {"budget": 1667909.59, "actual": 0.0, "ach": 0.0, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 16679.1, "amt_to_qualify": 1667909.59, "rank": 18, "total_n": 18}}, {"id": "C000005697", "name": "WAYNE DISCOUNT CENTER & CO LTD", "portfolio": "Key", "is_group": false, "n_stores": 1, "passcode": "wayne697", "q1": {"budget": 1417755.01, "actual": 923719.02, "ach": 65.2, "band": "Silver", "rate": 0.01, "qualifies": false, "rebate": 0, "reward_at_100": 14177.55, "amt_to_qualify": 494035.99, "rank": 17, "total_n": 18}, "q2": {"budget": 986821.44, "actual": 1469460.55, "ach": 148.9, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 14694.61, "reward_at_100": 9868.21, "amt_to_qualify": 0, "rank": 1, "total_n": 18}, "q3": {"budget": 1089089.61, "actual": 1112946.8, "ach": 102.2, "band": "Silver", "rate": 0.01, "qualifies": true, "rebate": 11129.47, "reward_at_100": 10890.9, "amt_to_qualify": 0, "rank": 1, "total_n": 18}}], "unenrolled": [{"id": "C000009549", "name": "AFRESH SUPERMARKET-KINGSTON", "q1_actual": 865136.06, "q2_actual": 1551199.85, "q3_actual_mtd": 1144438.24}]};
+
+function fmtM(v){
+  if(v===null||v===undefined) return '—';
+  return 'J$' + (v/1000000).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'M';
+}
+function fmtFull(v){
+  if(v===null||v===undefined) return '—';
+  return 'J$' + Math.round(v).toLocaleString('en-US');
+}
+
+const tierRank = {null:0, "Silver":1, "Gold":2, "Platinum":3};
+
+function renderKPIs(q){
+  const s = DATA.summary;
+  const tgt = s['tot_'+q+'_target'], act = s['tot_'+q+'_actual'];
+  const ach = tgt ? (act/tgt*100).toFixed(1) : '—';
+  let rebateLabel, rebateVal;
+  if(q==='q3'){ rebateLabel='Rebate Earned So Far'; rebateVal = s.tot_q3_rebate_so_far; }
+  else { rebateLabel='Rebate Paid'; rebateVal = s['tot_'+q+'_rebate']; }
+
+  let extraHtml = '';
+  if(q==='q3'){
+    extraHtml = `<div class="kpi"><div class="kpi-label">Qualified This Quarter</div>
+      <div class="kpi-val">${s.q3_qualified_count} of ${s.enrolled_count}</div>
+      <div class="kpi-sub"><span style="color:#8B95B8;">●</span> 18 Platinum &nbsp;<span style="color:#F5A623;">●</span> 18 Gold &nbsp;<span style="color:#B9C0D4;">●</span> 18 Silver</div></div>`;
+  }
+
+  document.getElementById('kpiStrip').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Key Accounts Enrolled</div><div class="kpi-val">${s.enrolled_count}</div><div class="kpi-sub">${s.unenrolled_count} pending a target</div></div>
+    <div class="kpi"><div class="kpi-label">Quarter Target</div><div class="kpi-val">${fmtM(tgt)}</div></div>
+    <div class="kpi"><div class="kpi-label">${q==='q3'?'Actual To Date':'Final Actual'}</div><div class="kpi-val">${fmtM(act)}</div><div class="kpi-sub">${ach}% of target</div></div>
+    <div class="kpi"><div class="kpi-label">${rebateLabel}</div><div class="kpi-val">${fmtM(rebateVal)}</div></div>
+    ${extraHtml}
+  `;
+}
+
+function bandPillHtml(band){
+  if(!band) return `<span class="tier-pill tier-none">—</span>`;
+  return `<span class="tier-pill tier-${band}"><span class="pdot"></span>${band}</span>`;
+}
+
+function qualPillHtml(qualifies){
+  return qualifies
+    ? `<span class="tier-pill" style="background:#F0FDF4;color:#1A8F4C;">Qualified</span>`
+    : `<span class="tier-pill tier-none">Not yet</span>`;
+}
+
+function progressBarHtml(actual, budget){
+  const pct = budget ? (actual/budget*100) : 0;
+  const fillPct = Math.min(pct, 100);
+  let color;
+  if(pct >= 100) color = '#1A8F4C';       // green — target hit
+  else if(pct >= 70) color = '#E8A93D';   // amber — getting close
+  else color = '#D64545';                 // red — well behind
+  return `
+    <div class="pbar-wrap">
+      <div class="pbar">
+        <div class="pbar-fill" style="width:${fillPct}%;background:${color};"></div>
+        <div class="pbar-tick hit" style="left:100%;"></div>
+      </div>
+      <div class="pbar-sub">${pct.toFixed(0)}% of target</div>
+    </div>`;
+}
+
+function linkCellHtml(passcode){
+  if(!passcode) return '<span style="color:var(--text-soft);">—</span>';
+  return `<button class="copy-btn" data-passcode="${passcode}" onclick="copyLink(this)">Copy Passcode</button>`;
+}
+
+function copyLink(btn){
+  const passcode = btn.dataset.passcode;
+  navigator.clipboard.writeText(passcode).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function applySearch(rows){
+  const term = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  if(!term) return rows;
+  return rows.filter(c => c.name.toLowerCase().includes(term));
+}
+
+function bandHeaderHtml(band, rows, qKey, isFirst){
+  const total = rows.length;
+  const qualCount = rows.filter(c=>c[qKey].qualifies).length;
+  const rate = total ? (rows[0][qKey].rate*100).toFixed(1) : '';
+  return `<tr class="band-header-row"><td colspan="8">
+    <div class="band-header ${band}${isFirst ? ' band-header-first' : ''}">
+      <div class="bh-left"><span class="bh-dot"></span><span class="bh-name">${band} band</span><span class="bh-count">${total} accounts · ${qualCount} qualified this period</span></div>
+      <div class="bh-rate">${rate}% rebate</div>
+    </div>
+  </td></tr>`;
+}
+
+function groupTagHtml(c){
+  if(!c.is_group) return '';
+  return ` <span class="group-tag" onclick="toggleGroupDetail(event,'${c.id}')">▸ GROUP · ${c.n_stores} stores</span>`;
+}
+
+function toggleGroupDetail(evt, id){
+  const row = document.getElementById('detail-'+id);
+  if(!row) return;
+  const open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'table-row';
+  const tag = evt.target;
+  tag.textContent = tag.textContent.replace(open ? '▾' : '▸', open ? '▸' : '▾');
+}
+
+function storeDetailHtml(c, qKey){
+  if(!c.is_group || !c.stores || !c.stores[qKey]) return '';
+  const rows = c.stores[qKey].map(s => {
+    const pct = s.ach===null ? 0 : Math.min(s.ach,100);
+    const color = s.ach===null ? 'var(--none-bg)' : (s.ach>=100?'#1A8F4C':(s.ach>=70?'#E8A93D':'#D64545'));
+    return `<tr>
+      <td style="padding-left:28px;color:var(--text-mid);font-size:11.5px;">${s.name}</td>
+      <td class="r" style="font-size:11.5px;">${fmtFull(s.budget)}</td>
+      <td class="r" style="font-size:11.5px;">${fmtFull(s.actual)}</td>
+      <td style="width:100px;"><div class="pbar" style="height:8px;margin:0;"><div class="pbar-fill" style="width:${pct}%;background:${color};"></div></div></td>
+      <td class="r" style="font-size:11.5px;">${s.ach===null?'—':s.ach+'%'}</td>
+      <td></td><td></td><td></td>
+    </tr>`;
+  }).join('');
+  return `<tr class="group-detail-row" id="detail-${c.id}" style="display:none;">
+    <td colspan="8" style="padding:0;">
+      <table style="width:100%;border-collapse:collapse;background:var(--surface-alt);">
+        <tbody>${rows}</tbody>
+      </table>
+    </td>
+  </tr>`;
+}
+
+function rowHtmlLive(c){
+  const q = c.q3;
+  const statusHtml = q.qualifies ? qualPillHtml(true) : `<span class="to-next">${fmtFull(q.amt_to_qualify)} to qualify</span>`;
+  const minRebate = q.budget * q.rate;
+  return `<tr class="band-row-${q.band}">
+    <td class="cname">${c.name}${groupTagHtml(c)}</td>
+    <td class="r">${fmtFull(q.budget)}</td>
+    <td class="r">${fmtFull(q.actual)}</td>
+    <td>${progressBarHtml(q.actual, q.budget)}</td>
+    <td>${bandPillHtml(q.band)}</td>
+    <td>${statusHtml}</td>
+    <td class="r">${fmtFull(minRebate)}</td>
+    <td>${linkCellHtml(c.passcode)}</td>
+  </tr>${storeDetailHtml(c,'q3')}`;
+}
+
+function rowHtmlClosed(c, qKey){
+  const q = c[qKey];
+  return `<tr class="band-row-${q.band}">
+    <td class="cname">${c.name}${groupTagHtml(c)}</td>
+    <td class="r">${fmtFull(q.budget)}</td>
+    <td class="r">${fmtFull(q.actual)}</td>
+    <td class="r">${q.ach}%</td>
+    <td>${bandPillHtml(q.band)}</td>
+    <td>${qualPillHtml(q.qualifies)}</td>
+    <td class="r">${fmtFull(q.rebate)}</td>
+    <td>${linkCellHtml(c.passcode)}</td>
+  </tr>${storeDetailHtml(c,qKey)}`;
+}
+
+const LIVE_COLS = [
+  {label:'Customer'}, {label:'Quarterly Target', r:true}, {label:'Actual (QTD)', r:true},
+  {label:'Progress'}, {label:'Size Band'}, {label:'Status'},
+  {label:'Min Rebate if Qtr Hit', r:true}, {label:'Passcode'}
+];
+const CLOSED_COLS = [
+  {label:'Customer'}, {label:'Quarterly Target', r:true}, {label:'Final Actual', r:true},
+  {label:'Achievement', r:true}, {label:'Size Band'}, {label:'Status'},
+  {label:'Rebate Earned', r:true}, {label:'Passcode'}
+];
+function theadRowHtml(cols){
+  return `<tr>${cols.map(c=>`<th${c.r?' class="r"':''}>${c.label}</th>`).join('')}</tr>`;
+}
+function colHeaderRowHtml(cols){
+  return `<tr class="col-header-row">${cols.map(c=>`<td${c.r?' class="r"':''}>${c.label}</td>`).join('')}</tr>`;
+}
+
+function renderTableLive(sortMode){
+  let rows = DATA.customers.slice();
+  rows = applySearch(rows);
+
+  if(currentView === 'grouped'){
+    document.getElementById('thead').innerHTML = '';
+    let body = '';
+    let isFirst = true;
+    ['Platinum','Gold','Silver'].forEach(band=>{
+      let grp = rows.filter(c => c.q3.band === band);
+      sortRows(grp, sortMode, 'q3');
+      if(grp.length === 0) return;
+      body += bandHeaderHtml(band, grp, 'q3', isFirst);
+      isFirst = false;
+      body += colHeaderRowHtml(LIVE_COLS);
+      body += grp.map(rowHtmlLive).join('');
+    });
+    document.getElementById('tbody').innerHTML = body;
+  } else {
+    document.getElementById('thead').innerHTML = theadRowHtml(LIVE_COLS);
+    sortRows(rows, sortMode, 'q3');
+    document.getElementById('tbody').innerHTML = rows.map(rowHtmlLive).join('');
+  }
+  document.getElementById('rowCount').textContent = rows.length + ' Key accounts';
+  document.getElementById('footNote').textContent = 'Quarter to date: Jul 1 – Sep 8, 2026. Size band is re-cut each quarter by target size (largest 18 = Platinum, middle 18 = Gold, smallest 18 = Silver). "Min rebate if qtr hit" = target × band rate — the floor payout if they land exactly on target; actual payout is higher if they finish above it.';
+}
+
+function renderTableClosed(qKey, label){
+  let rows = DATA.customers.slice();
+  rows = applySearch(rows);
+
+  if(currentView === 'grouped'){
+    document.getElementById('thead').innerHTML = '';
+    let body = '';
+    let isFirst = true;
+    ['Platinum','Gold','Silver'].forEach(band=>{
+      let grp = rows.filter(c => c[qKey].band === band);
+      sortRows(grp, document.getElementById('sortSel').value, qKey);
+      if(grp.length === 0) return;
+      body += bandHeaderHtml(band, grp, qKey, isFirst);
+      isFirst = false;
+      body += colHeaderRowHtml(CLOSED_COLS);
+      body += grp.map(c=>rowHtmlClosed(c, qKey)).join('');
+    });
+    document.getElementById('tbody').innerHTML = body;
+  } else {
+    document.getElementById('thead').innerHTML = theadRowHtml(CLOSED_COLS);
+    sortRows(rows, document.getElementById('sortSel').value, qKey);
+    document.getElementById('tbody').innerHTML = rows.map(c=>rowHtmlClosed(c, qKey)).join('');
+  }
+  document.getElementById('rowCount').textContent = rows.length + ' Key accounts';
+  document.getElementById('footNote').textContent = label + " — final results. Size band was set from that quarter's own target ranking; rebate paid only if the customer hit 100% of their target.";
+}
+
+function sortRows(rows, mode, qKey){
+  if(mode==='name') rows.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(mode==='target_desc') rows.sort((a,b)=>(b[qKey].budget||0)-(a[qKey].budget||0));
+  else if(mode==='ach_desc') rows.sort((a,b)=>(b[qKey].ach||0)-(a[qKey].ach||0));
+  else if(mode==='ach_asc') rows.sort((a,b)=>(a[qKey].ach||0)-(b[qKey].ach||0));
+  else if(mode==='next_asc') rows.sort((a,b)=>{
+    const an = a[qKey].qualifies ? Infinity : a[qKey].amt_to_qualify;
+    const bn = b[qKey].qualifies ? Infinity : b[qKey].amt_to_qualify;
+    return an-bn;
+  });
+}
+
+let currentQ = 'q3';
+let currentView = 'grouped';
+function render(){
+  renderKPIs(currentQ);
+  const sortMode = document.getElementById('sortSel').value;
+  if(currentQ==='q3') renderTableLive(sortMode);
+  else if(currentQ==='q1') renderTableClosed('q1','Q1 2026 (Jan–Mar)');
+  else renderTableClosed('q2','Q2 2026 (Apr–Jun)');
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    currentQ = t.dataset.q;
+    render();
+  });
+});
+document.querySelectorAll('#viewToggle button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#viewToggle button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentView = b.dataset.view;
+    render();
+  });
+});
+document.getElementById('sortSel').addEventListener('change', render);
+document.getElementById('searchInput').addEventListener('input', render);
+
+render();
+</script>
+</body>
+</html>
