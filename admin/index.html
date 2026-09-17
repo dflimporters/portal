@@ -480,7 +480,7 @@ function colHeaderRowHtml(cols){
 }
 
 function renderTableLive(sortMode){
-  let rows = DATA.customers.slice();
+  let rows = DATA.customers.filter(c => c.q3);
   rows = applySearch(rows);
 
   if(currentView === 'grouped'){
@@ -507,7 +507,7 @@ function renderTableLive(sortMode){
 }
 
 function renderTableClosed(qKey, label){
-  let rows = DATA.customers.slice();
+  let rows = DATA.customers.filter(c => c[qKey]);
   rows = applySearch(rows);
 
   if(currentView === 'grouped'){
