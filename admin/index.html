@@ -778,7 +778,7 @@ function presentAccount(cid){
   const gap=m.nextN?Number(r['gap_to_l'+m.nextN]):0;
   const ring=`<svg viewBox="0 0 112 112" role="img" aria-label="${Math.round(m.fill)} percent of target"><circle cx="56" cy="56" r="46" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="10"/><circle cx="56" cy="56" r="46" fill="none" stroke="${ringColor(m.fill)}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${RC.toFixed(2)}" stroke-dashoffset="${(RC*(1-Math.max(m.fill,1.5)/100)).toFixed(2)}" transform="rotate(-90 56 56)"/></svg>`;
   const head=tgtN
-    ?`<div class="l">${m.T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Target this quarter'}</div><div class="n">${jmdM(Number(r['l'+tgtN+'_target']))}</div><div class="m"><span class="dl">${CT.left} ${CT.left===1?'day':'days'} left</span></div>`
+    ?`<div class="l">${m.T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Target this quarter'}</div><div class="n">${jmdM(Number(r['l'+tgtN+'_target']))}</div><div class="m">Hit it to earn <b style="color:${ringColor(m.fill)};font-family:'Montserrat',sans-serif;font-weight:800">${jmd(payAt(tgtN))}</b></div>`
     :`<div class="l">Target this quarter</div><div class="n">Not set</div>`;
   PV=cid;
   $('pv').innerHTML=`<div class="pvbar"><button class="mini" onclick="closePresent()">← Back to list</button><span>${esc(title(r.customer_name))}</span></div>
@@ -789,7 +789,7 @@ function presentAccount(cid){
       <div><div class="cap">Purchased so far</div><div class="v">${jmd(m.qtd)}</div></div>
       <div><div class="cap">${m.nextN?'Still to go':'Status'}</div><div class="v">${m.nextN?jmd(gap):'Reached'}</div></div>
       <div><div class="cap">Rebate as it stands</div><div class="v">${jmd(r.rebate_earned)}</div></div>
-      <div><div class="cap">Payout at target${tgtN?' ('+Number(r['l'+tgtN+'_rate']||0)+'%)':''}</div><div class="v">${tgtN?jmd(payAt(tgtN)):'—'}</div></div>
+      <div><div class="cap">Days left</div><div class="v">${CT.left}</div></div>
     </div></div>
     ${m.T.length>1?levelsTable(r):''}
     <div class="gst" id="pv_gs">${storesInner(r)}</div>
