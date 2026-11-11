@@ -230,6 +230,8 @@ body.own .shd,body.own #setupBtn,body.own #setupBar,body.own #lines,body.own #pr
 details.st.own>summary.sr{display:flex;align-items:center;gap:14px}
 details.st.own .c-name{flex:1;min-width:0}details.st.own .c-s{flex:0 0 auto}
 body.priv .sr .c-bar,body.priv .sr .c-n,body.priv #hero,body.priv .xp .xs,body.priv .xp .xt,body.priv .xp .gst{filter:blur(9px);pointer-events:none;-webkit-user-select:none;user-select:none}
+.prevbar{align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#FDF3DC;border:1.5px solid #E3C170;color:#7A5604;border-radius:14px;padding:10px 14px;margin:0 0 16px;font-size:13px;font-weight:600}
+.prevbar .mini{border-color:#E3C170}
 /* single-customer screen */
 body.pvopen{overflow:hidden}
 .pv{position:fixed;inset:0;z-index:70;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch}
@@ -262,9 +264,10 @@ body.pvopen{overflow:hidden}
     <button onclick="signOut()">Sign out</button>
   </div>
   <div class="wrap">
+    <div id="prevbar" class="prevbar" style="display:none"><span>Previewing what <b id="prevname"></b> sees. View only.</span><button class="mini" onclick="exitPreview()">Exit preview</button></div>
     <div class="hd">
       <div><div class="eyebrow">Key accounts</div><h1>How everyone is tracking</h1></div>
-      <div class="ctl"><select id="prog" onchange="selectProg()"></select><button class="mini" onclick="refresh()">Refresh</button><button class="mini" id="privBtn" onclick="togglePriv()">Hide figures</button><button class="mini" id="setupBtn" onclick="toggleSetup()">Setup</button></div>
+      <div class="ctl"><select id="prog" onchange="selectProg()"></select><select id="viewAs" onchange="viewAs(this.value)" style="display:none" aria-label="View as an account manager"></select><button class="mini" onclick="refresh()">Refresh</button><button class="mini" id="privBtn" onclick="togglePriv()">Hide figures</button><button class="mini" id="setupBtn" onclick="toggleSetup()">Setup</button></div>
     </div>
     <div class="stamp" id="stamp"></div>
     <div id="setupBar"></div>
@@ -297,7 +300,7 @@ const DEFRATE={1:1,2:1.5,3:2};
 const BR=[{k:'Platinum',n:3,name:'Platinum band'},{k:'Gold',n:2,name:'Gold band'},{k:'Silver',n:1,name:'Silver band'},{k:'',n:0,name:'Other key accounts'}];
 const sb=supabase.createClient(URL_,KEY);
 const $=id=>document.getElementById(id);
-let SCOPE='all', PV='', LCK=null, HIDDEN_AT=0;
+let SCOPE='all', REAL='all', PREV=null, PREVUSERS=[], PV='', LCK=null, HIDDEN_AT=0;
 let AC='', ALL=[], PID=null, ROWS=[], LQ={}, LOADED=0, SIG='', BANDS=[], BMAP={}, DET={}, RANKB={}, FILTER='', SETUP='', IDLE=null;
 function setBands(b){BANDS=Array.isArray(b)?b:[];BMAP={};BANDS.forEach(x=>{BMAP[x.customer_id]=x;});}
 const RC=2*Math.PI*46;
@@ -345,7 +348,7 @@ async function handleSession(session){
   try{
     const who=await rpc('rebate_sso_whoami').catch(()=>null);
     if(!who||!who.scope){ await deny(); return; }
-    SCOPE=who.scope; document.body.classList.toggle('own',SCOPE==='own');
+    SCOPE=who.scope; REAL=who.scope; PREV=null; $('prevbar').style.display='none'; document.body.classList.toggle('own',SCOPE==='own');
     const [rows,bands]=await Promise.all([rpc('rebate_sso_admin_view'),rpc('rebate_sso_admin_bands').catch(()=>[])]);
     if(!Array.isArray(rows)||!rows.length){
       if(SCOPE!=='own'){ await deny(); return; }
@@ -354,7 +357,7 @@ async function handleSession(session){
       armLock(); return;
     }
     AC='sso'; ALL=rows; setBands(bands); LOADED=Date.now(); await loadMembers();
-    $('gate').style.display='none'; $('app').style.display='block'; init(); armLock();
+    $('gate').style.display='none'; $('app').style.display='block'; init(); armLock(); loadPreviewUsers();
   }catch(e){ $('gerr').innerHTML='<div class="err">'+esc(e.message)+'. Check your connection.</div>'; }
 }
 async function signOut(){
@@ -395,7 +398,7 @@ function init(){
   $('linkTxt').textContent=customerLink();
   pick(); renderAll(); loadLines();
 }
-function pick(){ROWS=ALL.filter(r=>Number(r.programme_id)===Number(PID)); setCtx();}
+function pick(){ROWS=ALL.filter(r=>Number(r.programme_id)===Number(PID)&&(!PREV||PREV.has(r.customer_id))); setCtx();}
 function selectProg(){pick(); renderAll();}
 
 function renderHero(){
@@ -741,6 +744,30 @@ function fixLogos(){
 fixLogos();
 
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&Date.now()-LOADED>120000) refresh(true);});
+/* ---------- "View as": full-access staff preview what an account manager sees (view only) ---------- */
+async function loadPreviewUsers(){
+  if(REAL!=='all') return;
+  try{ const u=await rpc('rebate_sso_preview_users'); PREVUSERS=Array.isArray(u)?u:[]; }catch(e){ PREVUSERS=[]; }
+  const s=$('viewAs');
+  if(!PREVUSERS.length){ s.style.display='none'; return; }
+  s.innerHTML='<option value="">View as…</option>'+PREVUSERS.map(u=>`<option value="${esc(u.user_id)}">${esc(u.name)}</option>`).join('');
+  s.style.display='';
+}
+function viewAs(id){
+  if(!id){ exitPreview(); return; }
+  const u=PREVUSERS.find(x=>x.user_id===id); if(!u) return;
+  if(SETUP) lockSetup();
+  closePresent();
+  PREV=new Set(u.accounts); SCOPE='own'; document.body.classList.add('own');
+  $('prevname').textContent=u.name; $('prevbar').style.display='flex';
+  pick(); renderAll();
+}
+function exitPreview(){
+  PREV=null; SCOPE=REAL; document.body.classList.remove('own');
+  $('prevbar').style.display='none'; $('viewAs').value='';
+  closePresent(); pick(); renderAll();
+}
+
 /* ---------- single-customer screen: one account only, nothing else on screen ---------- */
 function presentAccount(cid){
   const r=ROWS.find(x=>x.customer_id===cid); if(!r) return;
