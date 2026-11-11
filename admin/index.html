@@ -203,8 +203,9 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
 .lnro b{color:var(--ink);font-family:'Montserrat',sans-serif}
 
 @media (max-width:820px){
-  details.st,.plr{background:#F6F8FC;border:1px solid #DDE3F0;border-radius:16px;padding:4px 14px;margin-bottom:10px}
-  details.st:last-child,.plr:last-child{border-bottom:1px solid #DDE3F0}
+  details.st,.plr{background:#F1F4FB;border:1px solid #C5CFE6;border-radius:16px;padding:4px 14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,30,70,.10)}
+  details.st:last-child,.plr:last-child{border-bottom:1px solid #C5CFE6;margin-bottom:8px}
+  details.st[open]{border-color:var(--gc,#3F6BD6);box-shadow:0 2px 8px rgba(20,30,70,.14)}
   .sr{padding:12px 0}
   .nn,.ns{white-space:normal}
   .xs>div,.gst,.xt{background:#fff}
@@ -241,7 +242,7 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
     <div class="lk"><span>Customer link</span><code id="linkTxt"></code><button class="mini" onclick="copyLink()">Copy link</button></div>
     <div class="ln" id="lines"></div>
     <div id="groups"></div>
-    <p class="hint">Accounts are placed in a tier by their full-year 2026 budget, using the lines above. The shortfall and the 2% are added afterwards, so final targets can overlap between tiers. Changing a line moves accounts between tiers and resets their rate to the tier\u2019s rate. Open a store to see its numbers, or to send it the link and password. Targets and the tier lines are locked; use Setup to change them.</p>
+    <p class="hint">Accounts are placed in a tier by their full-year 2026 budget, using the tier lines (set in Setup). The shortfall and the 2% are added afterwards, so final targets can overlap between tiers. Changing a line moves accounts between tiers and resets their rate to the tier\u2019s rate. Open a store to see its numbers, or to send it the link and password. Targets and the tier lines are locked; use Setup to change them.</p>
   </div>
 </div>
 
