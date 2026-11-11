@@ -537,10 +537,13 @@ function renderStore(){
   /* hero: ring + what you could earn */
   const rateN=lvl>0?lvl:topN, rate=Number(d['l'+rateN+'_rate']||0);
   const rateTxt=(lvl===0&&T.length>1?'Up to ':'')+rate+'% cash back';
-  const hl=lvl===0?(T.length>1?'You could earn up to':'You could earn'):'Your rebate so far';
-  const hn=lvl===0?jmd(payAt(d,topN)):jmd(d.rebate_earned);
   const tgtN=nextN||topN, tgtVal=Number(d['l'+tgtN+'_target']);
   const tgtLabel=T.length>1?TIER[tgtN]+' target':'Your target';
+  // Before any level is reached, lead with the target: what the customer has to buy this quarter.
+  const hl=lvl===0?(T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Your target this quarter'):'Your rebate so far';
+  const hn=lvl===0?jmdM(tgtVal):jmd(d.rebate_earned);
+  const hm=lvl===0?'Hit it to earn <b>'+jmd(payAt(d,tgtN))+'</b> · '+left+' days left':'<b>'+rateTxt+'</b> · '+left+' days left';
+  const stL=lvl===0?['Purchased so far',jmd(qtd)]:[tgtLabel,jmd(tgtVal)];
   const goLabel=nextN?'Still to go':'Status', goVal=nextN?jmd(d['gap_to_l'+nextN]):'Reached';
   const bottom=lvl>0?(nextN?TIER[nextN]+' would pay <b>'+jmd(payAt(d,nextN))+'</b> at '+jmd(tgtVal)+'.':'Top level reached \u2014 it keeps growing with every purchase.'):'';
   const chips=T.length>1?'<div class="rwch">'+T.map(n=>'<span><i style="background:'+TDOT[n]+'"></i>'+TIER[n]+' '+jmdM(payAt(d,n))+'</span>').join('')+'</div>':'';
@@ -597,11 +600,11 @@ function renderStore(){
       <div class="rwtx">
         <div class="l">${hl}</div>
         <div class="n">${hn}</div>
-        <div class="m"><b>${rateTxt}</b> \u00b7 ${left} days left</div>
+        <div class="m">${hm}</div>
       </div>
     </div>
     <div class="rwst">
-      <div><div class="cap">${tgtLabel}</div><div class="v">${jmd(tgtVal)}</div></div>
+      <div><div class="cap">${stL[0]}</div><div class="v">${stL[1]}</div></div>
       <span class="dv"></span>
       <div><div class="cap">${goLabel}</div><div class="v">${goVal}</div></div>
     </div>
@@ -667,11 +670,15 @@ function renderMember(){
 
   const rateN=lvl>0?lvl:topN, rate=Number(g['l'+rateN+'_rate']||0);
   const rateTxt=(lvl===0&&T.length>1?'Up to ':'')+rate+'% cash back';
-  const hl=lvl===0?'You could earn up to':'Your share of the rebate so far';
-  const hn=lvl===0?jmd(payAt(g,topN)*sh):jmd(MEM.store_rebate);
   const tgtN=nextN||topN;
   const tgtLabel=T.length>1?'Your share of '+TIER[tgtN]:'Your share of target';
-  const goLabel=nextN?'Group still to go':'Group status', goVal=nextN?jmd(g['gap_to_l'+nextN]):'Reached';
+  const storeGap=Math.max(mine(tgtN)-qtd,0);
+  // Before the group reaches a level, lead with this store's own target.
+  const hl=lvl===0?(T.length>1?'Your store’s '+TIER[tgtN]+' target':'Your store’s target this quarter'):'Your share of the rebate so far';
+  const hn=lvl===0?jmdM(mine(tgtN)):jmd(MEM.store_rebate);
+  const hm=lvl===0?'Hit it to earn up to <b>'+jmd(payAt(g,tgtN)*sh)+'</b> · '+left+' days left':'<b>'+rateTxt+'</b> · '+left+' days left';
+  const stL=lvl===0?['Your store has bought',jmd(qtd)]:[tgtLabel,jmd(mine(tgtN))];
+  const stR=lvl===0?['Your store still to go',jmd(storeGap)]:[nextN?'Group still to go':'Group status',nextN?jmd(g['gap_to_l'+nextN]):'Reached'];
   const col=ringColor(fillPc);
   const paceBg=pt>0?'#E3F4EA':'#FCE9E7', paceFg=pt>0?'#217A4B':'#B23A33';
 
@@ -690,13 +697,13 @@ function renderMember(){
       <div class="rwtx">
         <div class="l">${hl}</div>
         <div class="n">${hn}</div>
-        <div class="m"><b>${rateTxt}</b> · ${left} days left</div>
+        <div class="m">${hm}</div>
       </div>
     </div>
     <div class="rwst">
-      <div><div class="cap">${tgtLabel}</div><div class="v">${jmd(mine(tgtN))}</div></div>
+      <div><div class="cap">${stL[0]}</div><div class="v">${stL[1]}</div></div>
       <span class="dv"></span>
-      <div><div class="cap">${goLabel}</div><div class="v">${goVal}</div></div>
+      <div><div class="cap">${stR[0]}</div><div class="v">${stR[1]}</div></div>
     </div>
   </div>
   <div id="inst" class="install"></div>
@@ -709,6 +716,7 @@ function renderMember(){
     <h3>The whole group · ${esc(title(g.customer_name))}</h3>
     ${li('bag','#E6EEFC','#2A4FAE','Group purchases',Math.round(gPc)+'% of the group target',jmdM(gq))}
     ${li('cash','#E1F2F4','#1F6E7C','Group rebate as it stands',nextN?TIER[nextN]+' would pay '+jmd(payAt(g,nextN)):TIER[lvl]+' rate applied',jmd(g.rebate_earned))}
+    ${nextN?li('cal','#FAEEDA','#854F0B','Group still to go','To reach '+TIER[nextN],jmdM(g['gap_to_l'+nextN])):''}
     ${li('cal','#FAEEDA','#854F0B',nextN?'Group needed each week':'Targets reached','',nextN?jmdM(needWk):'✓')}
     ${li('trend',paceBg,paceFg,'Group projected finish',paceMsg(pt,gproj,gtop),jmdM(gproj))}
   </div>
