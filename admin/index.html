@@ -6,6 +6,11 @@
 <meta name="robots" content="noindex,nofollow">
 <title>DFL Rewards — Admin</title>
 <meta name="theme-color" content="#0F1F45">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DFL Staff">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -238,6 +243,7 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
   <div class="bar">
     <div class="logo"><img src="https://hzagwndglwhcepsirafi.supabase.co/storage/v1/object/public/Assets/DFL%20Logo%20Blue_White.png" alt="DFL Importers" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="wm">DFL<small>IMPORTERS</small></span></div>
     <div class="t">Rewards admin</div>
+    <button id="instBtn" style="display:none" onclick="doInstall()">Install app</button>
     <button onclick="signOut()">Sign out</button>
   </div>
   <div class="wrap">
@@ -696,6 +702,14 @@ function fixLogos(){
 fixLogos();
 
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&Date.now()-LOADED>120000) refresh(true);});
+/* ---------- install as a staff app ---------- */
+let DEFERRED=null;
+const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e;if(!standalone()) $('instBtn').style.display='';});
+window.addEventListener('appinstalled',()=>{DEFERRED=null;$('instBtn').style.display='none';});
+async function doInstall(){ if(!DEFERRED) return; DEFERRED.prompt(); await DEFERRED.userChoice; DEFERRED=null; $('instBtn').style.display='none'; }
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+
 sb.auth.getSession().then(({data:{session}})=>handleSession(session));
 sb.auth.onAuthStateChange((ev,session)=>{ if(ev==='SIGNED_IN'&&!AC) handleSession(session); });
 </script>
