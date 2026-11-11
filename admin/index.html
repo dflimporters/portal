@@ -226,10 +226,9 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
   .xs>div,.gst,.xt{background:#fff}
 }
 /* key account manager view: names and status only, figures live in the single-customer screen */
-body.own .shd,body.own #setupBtn,body.own #setupBar,body.own #lines,body.own #privBtn{display:none}
+body.own .shd,body.own #setupBtn,body.own #setupBar,body.own #lines{display:none}
 details.st.own>summary.sr{display:flex;align-items:center;gap:14px}
 details.st.own .c-name{flex:1;min-width:0}details.st.own .c-s{flex:0 0 auto}
-body.priv .sr .c-bar,body.priv .sr .c-n,body.priv #hero,body.priv .xp .xs,body.priv .xp .xt,body.priv .xp .gst{filter:blur(9px);pointer-events:none;-webkit-user-select:none;user-select:none}
 .prevbar{align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#FDF3DC;border:1.5px solid #E3C170;color:#7A5604;border-radius:14px;padding:10px 14px;margin:0 0 16px;font-size:13px;font-weight:600}
 .prevbar .mini{border-color:#E3C170}
 /* single-customer screen */
@@ -240,6 +239,8 @@ body.pvopen{overflow:hidden}
 .pvbar .mini{background:none;border:1px solid rgba(255,255,255,.3);color:#fff}
 .pvbody{max-width:720px;margin:0 auto;padding:18px 16px calc(40px + env(safe-area-inset-bottom))}
 .pvbody .xt{margin-top:14px}
+.pvbody .rwtx .m .dl{display:block;white-space:nowrap}
+.xt.ro.lv .h,.xt.ro.lv .tr{grid-template-columns:minmax(0,1fr) auto auto}.xt.ro.lv .tr .rt{color:#217A4B;font-weight:800}
 .lockscr{position:fixed;inset:0;z-index:90;background:var(--navy);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
 .lockscr h2{font-size:24px;font-weight:800}.lockscr p{color:#AFC0E4;font-size:14px;max-width:320px}
 </style>
@@ -267,7 +268,7 @@ body.pvopen{overflow:hidden}
     <div id="prevbar" class="prevbar" style="display:none"><span>Previewing what <b id="prevname"></b> sees. View only.</span><button class="mini" onclick="exitPreview()">Exit preview</button></div>
     <div class="hd">
       <div><div class="eyebrow">Key accounts</div><h1>How everyone is tracking</h1></div>
-      <div class="ctl"><select id="prog" onchange="selectProg()"></select><select id="viewAs" onchange="viewAs(this.value)" style="display:none" aria-label="View as an account manager"></select><button class="mini" onclick="refresh()">Refresh</button><button class="mini" id="privBtn" onclick="togglePriv()">Hide figures</button><button class="mini" id="setupBtn" onclick="toggleSetup()">Setup</button></div>
+      <div class="ctl"><select id="prog" onchange="selectProg()"></select><select id="viewAs" onchange="viewAs(this.value)" style="display:none" aria-label="View as an account manager"></select><button class="mini" onclick="refresh()">Refresh</button><button class="mini" id="setupBtn" onclick="toggleSetup()">Setup</button></div>
     </div>
     <div class="stamp" id="stamp"></div>
     <div id="setupBar"></div>
@@ -777,7 +778,7 @@ function presentAccount(cid){
   const gap=m.nextN?Number(r['gap_to_l'+m.nextN]):0;
   const ring=`<svg viewBox="0 0 112 112" role="img" aria-label="${Math.round(m.fill)} percent of target"><circle cx="56" cy="56" r="46" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="10"/><circle cx="56" cy="56" r="46" fill="none" stroke="${ringColor(m.fill)}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${RC.toFixed(2)}" stroke-dashoffset="${(RC*(1-Math.max(m.fill,1.5)/100)).toFixed(2)}" transform="rotate(-90 56 56)"/></svg>`;
   const head=tgtN
-    ?`<div class="l">${m.T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Target this quarter'}</div><div class="n">${jmdM(Number(r['l'+tgtN+'_target']))}</div><div class="m">Hit it to earn <b>${jmd(payAt(tgtN))}</b> · ${CT.left} days left</div>`
+    ?`<div class="l">${m.T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Target this quarter'}</div><div class="n">${jmdM(Number(r['l'+tgtN+'_target']))}</div><div class="m"><span class="dl">${CT.left} ${CT.left===1?'day':'days'} left</span></div>`
     :`<div class="l">Target this quarter</div><div class="n">Not set</div>`;
   PV=cid;
   $('pv').innerHTML=`<div class="pvbar"><button class="mini" onclick="closePresent()">← Back to list</button><span>${esc(title(r.customer_name))}</span></div>
@@ -788,15 +789,23 @@ function presentAccount(cid){
       <div><div class="cap">Purchased so far</div><div class="v">${jmd(m.qtd)}</div></div>
       <div><div class="cap">${m.nextN?'Still to go':'Status'}</div><div class="v">${m.nextN?jmd(gap):'Reached'}</div></div>
       <div><div class="cap">Rebate as it stands</div><div class="v">${jmd(r.rebate_earned)}</div></div>
-      <div><div class="cap">Payout at target</div><div class="v">${tgtN?jmd(payAt(tgtN)):'—'}</div></div>
+      <div><div class="cap">Payout at target${tgtN?' ('+Number(r['l'+tgtN+'_rate']||0)+'%)':''}</div><div class="v">${tgtN?jmd(payAt(tgtN)):'—'}</div></div>
     </div></div>
-    ${roTargets(r)}
+    ${m.T.length>1?levelsTable(r):''}
     <div class="gst" id="pv_gs">${storesInner(r)}</div>
     <div class="xa" style="margin-top:6px"><span class="pw">${esc(r.access_code)}</span>
       <button class="mini" onclick="pvCopy('${id}')">Copy password</button>
       <button class="mini go" onclick="share('${id}')">Share link and password</button><span id="pv_s"></span></div></div>`;
   $('pv').style.display='block'; $('pv').scrollTop=0; document.body.classList.add('pvopen'); armLock();
   loadPvDet(cid);
+}
+// Only shown for accounts with more than one level; a single target is already in the card above.
+function levelsTable(r){
+  const rows=[3,2,1].filter(n=>Number(r['l'+n+'_target'])>0).map(n=>{
+    const t=Number(r['l'+n+'_target']), rt=Number(r['l'+n+'_rate']||0);
+    return `<div class="tr ro"><span class="tn"><span class="d" style="background:${TCOL[n]}"></span>${TIER[n]} · ${rt}%</span><b>${jmd(t)}</b><span class="rt">${jmd(Math.round(t*rt/100))}</span></div>`;
+  }).join('');
+  return `<div class="xt ro lv"><div class="h"><span>Level</span><span>Target</span><span>Payout</span></div>${rows}</div>`;
 }
 async function loadPvDet(cid){
   const r=ROWS.find(x=>x.customer_id===cid); if(!r) return;
@@ -805,7 +814,6 @@ async function loadPvDet(cid){
 }
 function closePresent(){ PV=''; const p=$('pv'); if(p){ p.style.display='none'; p.innerHTML=''; } document.body.classList.remove('pvopen'); }
 async function pvCopy(cid){ const r=ROWS.find(x=>x.customer_id===cid); if(!r) return; await copyText(r.access_code); const t=document.getElementById('pv_s'); if(t){ t.className='ok'; t.textContent='Copied'; setTimeout(()=>{t.textContent='';},1500); } }
-function togglePriv(){ document.body.classList.toggle('priv'); $('privBtn').textContent=document.body.classList.contains('priv')?'Show figures':'Hide figures'; }
 
 /* ---------- auto-lock: covers the screen after a pause or after leaving the app ---------- */
 function armLock(){ clearTimeout(LCK); if(!AC) return; LCK=setTimeout(lockNow,(PV?300:120)*1000); }
