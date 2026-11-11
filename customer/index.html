@@ -505,6 +505,7 @@ const li=(ic,bg,fg,label,sub,val,tap)=>{
 };
 
 function renderStore(){
+  $('store').style.marginTop='';
   const d=ME, T=tiersOf(d);
   const qs=new Date(d.quarter_start+'T00:00:00'), qe=new Date(d.quarter_end+'T00:00:00');
   const today=new Date(); today.setHours(0,0,0,0);
@@ -641,6 +642,7 @@ function renderStore(){
 
 /* ---- store login inside a group: own store + group total ---- */
 function renderMember(){
+  $('store').style.marginTop='20px';   // the tab bar (which normally gives this gap) is hidden for store logins
   const g=MEM.group, sh=Number(MEM.share), T=tiersOf(g);
   const qs=new Date(g.quarter_start+'T00:00:00'), qe=new Date(g.quarter_end+'T00:00:00');
   const today=new Date(); today.setHours(0,0,0,0);
