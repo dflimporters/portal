@@ -350,7 +350,7 @@ async function handleSession(session){
     if(!Array.isArray(rows)||!rows.length){
       if(SCOPE!=='own'){ await deny(); return; }
       AC='sso'; ALL=[]; ROWS=[]; $('gate').style.display='none'; $('app').style.display='block';
-      document.querySelector('.hd .ctl').style.display='none'; $('groups').innerHTML='<div class="empty">No accounts are assigned to you yet. Ask your manager to set you as the business development manager on your customers.</div>';
+      document.querySelector('.hd .ctl').style.display='none'; $('groups').innerHTML='<div class="empty">No accounts are assigned to you yet. Your accounts come from the key account and chain hubs, so ask your manager to check your list there.</div>';
       armLock(); return;
     }
     AC='sso'; ALL=rows; setBands(bands); LOADED=Date.now(); await loadMembers();
