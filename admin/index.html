@@ -268,7 +268,8 @@ const RC=2*Math.PI*46;
 const svg=(d,s=16)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const CHV=svg('<path d="M9 6l6 6-6 6"/>',16);
 async function rpc(fn,body){
-  const {data:{session}}=await sb.auth.getSession();
+  // Staff functions need the signed-in session; customer-code functions (e.g. rebate_store_detail) are anon-only.
+  const {data:{session}}=fn.startsWith('rebate_sso_')?await sb.auth.getSession():{data:{session:null}};
   const r=await fetch(URL_+'/rest/v1/rpc/'+fn,{method:'POST',
     headers:{'apikey':KEY,'Authorization':'Bearer '+(session?session.access_token:KEY),'Content-Type':'application/json'},
     body:JSON.stringify(body||{})});
