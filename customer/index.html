@@ -334,6 +334,7 @@ button.li:active{background:#F8F9FD}
 .rem{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;font-size:13px;color:var(--mid);cursor:pointer}
 .rem input{width:18px;height:18px;accent-color:#3F6BD6}
 .rwtx .m b{color:#F5B83D;font-family:'Montserrat',sans-serif;font-weight:700}
+.rwtx .m .dl{display:block;margin-top:3px;white-space:nowrap}
 .gate{justify-content:center;padding-bottom:calc(12vh + env(safe-area-inset-bottom))}
 </style>
 </head>
@@ -543,7 +544,8 @@ function renderStore(){
   // Before any level is reached, lead with the target: what the customer has to buy this quarter.
   const hl=lvl===0?(T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Your target this quarter'):'Your rebate so far';
   const hn=lvl===0?jmdM(tgtVal):jmd(d.rebate_earned);
-  const hm=lvl===0?'Hit it to earn <b>'+jmd(payAt(d,tgtN))+'</b> · '+left+' days left':'<b>'+rateTxt+'</b> · '+left+' days left';
+  const dl='<span class="dl">'+left+(left===1?' day left':' days left')+'</span>';   // always on its own line
+  const hm=lvl===0?'Hit it to earn <b>'+jmd(payAt(d,tgtN))+'</b>'+dl:'<b>'+rateTxt+'</b>'+dl;
   const stL=lvl===0?['Purchased so far',jmd(qtd)]:[tgtLabel,jmd(tgtVal)];
   const goLabel=nextN?'Still to go':'Status', goVal=nextN?jmd(d['gap_to_l'+nextN]):'Reached';
   const bottom=lvl>0?(nextN?TIER[nextN]+' would pay <b>'+jmd(payAt(d,nextN))+'</b> at '+jmd(tgtVal)+'.':'Top level reached \u2014 it keeps growing with every purchase.'):'';
@@ -678,7 +680,8 @@ function renderMember(){
   // Before the group reaches a level, lead with this store's own target.
   const hl=lvl===0?(T.length>1?'Your store’s '+TIER[tgtN]+' target':'Your store’s target this quarter'):'Your share of the rebate so far';
   const hn=lvl===0?jmdM(mine(tgtN)):jmd(MEM.store_rebate);
-  const hm=lvl===0?'Hit it to earn up to <b>'+jmd(payAt(g,tgtN)*sh)+'</b> · '+left+' days left':'<b>'+rateTxt+'</b> · '+left+' days left';
+  const dl='<span class="dl">'+left+(left===1?' day left':' days left')+'</span>';   // always on its own line
+  const hm=lvl===0?'Hit it to earn up to <b>'+jmd(payAt(g,tgtN)*sh)+'</b>'+dl:'<b>'+rateTxt+'</b>'+dl;
   const stL=lvl===0?['Your store has bought',jmd(qtd)]:[tgtLabel,jmd(mine(tgtN))];
   const stR=lvl===0?['Your store still to go',jmd(storeGap)]:[nextN?'Group still to go':'Group status',nextN?jmd(g['gap_to_l'+nextN]):'Reached'];
   const col=ringColor(fillPc);
