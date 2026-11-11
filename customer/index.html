@@ -396,7 +396,7 @@ const TIER=['','Silver','Gold','Platinum'];
 const CATNAME={GARBAGEBAG:'Garbage Bags',CLEARPACK:'Clear Pack',ECOCUP:'Eco Cups',ECOBAG:'Eco Bags',
   ECOSTRAW:'Eco Straws',ECOBOX:'Eco Boxes',FOODSUP:'Food Supplies'};
 const $=id=>document.getElementById(id);
-let PW='', ME=null, BOARD=[], DETAIL=null, LOADED=0, DEFERRED=null;
+let PW='', ME=null, MEM=null, BOARD=[], DETAIL=null, LOADED=0, DEFERRED=null;
 
 const svg=(d,s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const IC={
@@ -444,6 +444,16 @@ async function enter(){
 }
 async function load(pw,silent,remember){
   try{
+    // A store inside a group has its own password: show that store plus the group total.
+    const mem=await rpc('rebate_member_view',{p_code:pw}).catch(()=>null);
+    if(mem&&mem.member){
+      MEM=mem; ME=mem.group; PW=pw; LOADED=Date.now(); DETAIL=null; BOARD=[];
+      if(remember===false) store.del('dfl_rebate_pw'); else store.set('dfl_rebate_pw',pw);
+      document.querySelector('.stick').style.display='none'; $('board').innerHTML='';
+      $('gate').style.display='none'; $('app').style.display='block';
+      tab('store'); renderMember(); return;
+    }
+    MEM=null; document.querySelector('.stick').style.display='';
     const rows=await rpc('rebate_store_view',{p_code:pw});
     if(!rows.length){
       if(silent){store.del('dfl_rebate_pw');$('gate').style.display='flex';$('app').style.display='none';}
@@ -461,7 +471,7 @@ async function load(pw,silent,remember){
   }catch(e){ if(!silent) showErr(e.message+'. Check your connection and try again.'); }
 }
 function signOut(){
-  store.del('dfl_rebate_pw'); ME=null; PW=''; DETAIL=null; $('pw').value='';
+  store.del('dfl_rebate_pw'); ME=null; MEM=null; PW=''; DETAIL=null; $('pw').value=''; document.querySelector('.stick').style.display='';
   closeCats(); $('app').style.display='none'; $('gate').style.display='flex'; window.scrollTo(0,0);
 }
 function tiersOf(d){return [1,2,3].filter(n=>Number(d['l'+n+'_target'])>0);}
@@ -621,6 +631,101 @@ function renderStore(){
   </details>`;
 
   $('stamp').textContent=d.refreshed_at?'Updated '+new Date(d.refreshed_at).toLocaleString('en-GB',
+    {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const a=$('rarc');if(a)a.style.strokeDashoffset=(RC*(1-Math.max(fillPc,1.5)/100)).toFixed(2);}));
+  setupInstall();
+}
+
+/* ---- store login inside a group: own store + group total ---- */
+function renderMember(){
+  const g=MEM.group, sh=Number(MEM.share), T=tiersOf(g);
+  const qs=new Date(g.quarter_start+'T00:00:00'), qe=new Date(g.quarter_end+'T00:00:00');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const total=(qe-qs)/864e5+1;
+  const gone=Math.min(Math.max((today-qs)/864e5+1,0),total);
+  const left=Math.max(Math.round((qe-today)/864e5),0);
+  const q='Q'+(Math.floor(qs.getMonth()/3)+1)+' '+qs.getFullYear();
+  const lvl=g.level_achieved;
+
+  $('hiEye').textContent=greet();
+  $('hiPill').innerHTML='<span class="sp sp-0">'+esc(title(g.customer_name))+'</span>';
+  $('hiName').textContent=title(MEM.store_name);
+  if(!T.length||!(sh>0)){$('store').innerHTML='<div class="sec"><h2>Your target</h2><div class="sub">Your target is being set up. Your account manager will be in touch.</div></div>';return;}
+
+  const mine=n=>Number(g['l'+n+'_target'])*sh;          // this store's share of a level's target
+  const topN=T[T.length-1], top=mine(topN);
+  const nextN=T.find(n=>lvl<n);
+  const qtd=Number(MEM.store_qtd);
+  const gq=Number(g.qtd_purchases), gtop=Number(g['l'+topN+'_target']);
+  const gproj=gone>0?gq/gone*total:0;
+  let pt=0; T.forEach(n=>{if(gproj>=Number(g['l'+n+'_target'])) pt=n;});
+  const weeksLeft=left/7;
+  const needWk=(nextN&&weeksLeft>0)?Number(g['gap_to_l'+nextN])/weeksLeft:0;
+  const fillPc=Math.min(top>0?qtd/top*100:0,100);
+  const gPc=Math.min(gtop>0?gq/gtop*100:0,100);
+  const sharePc=Math.round(sh*100);
+
+  const rateN=lvl>0?lvl:topN, rate=Number(g['l'+rateN+'_rate']||0);
+  const rateTxt=(lvl===0&&T.length>1?'Up to ':'')+rate+'% cash back';
+  const hl=lvl===0?'You could earn up to':'Your share of the rebate so far';
+  const hn=lvl===0?jmd(payAt(g,topN)*sh):jmd(MEM.store_rebate);
+  const tgtN=nextN||topN;
+  const tgtLabel=T.length>1?'Your share of '+TIER[tgtN]:'Your share of target';
+  const goLabel=nextN?'Group still to go':'Group status', goVal=nextN?jmd(g['gap_to_l'+nextN]):'Reached';
+  const col=ringColor(fillPc);
+  const paceBg=pt>0?'#E3F4EA':'#FCE9E7', paceFg=pt>0?'#217A4B':'#B23A33';
+
+  $('store').innerHTML=`
+  <div class="rw">
+    <div class="rwtop"><span>DFL Rewards</span><span>${q}</span></div>
+    <div class="rwmain">
+      <div class="ring">
+        <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label="${Math.round(fillPc)} percent of your store's share of the target">
+          <circle cx="56" cy="56" r="46" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="10"/>
+          <circle id="rarc" class="rarc" cx="56" cy="56" r="46" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="${RC.toFixed(2)}" stroke-dashoffset="${RC.toFixed(2)}" transform="rotate(-90 56 56)"/>
+        </svg>
+        <div class="mid"><span class="rn">${Math.round(fillPc)}%</span><span class="rs">your store</span></div>
+      </div>
+      <div class="rwtx">
+        <div class="l">${hl}</div>
+        <div class="n">${hn}</div>
+        <div class="m"><b>${rateTxt}</b> · ${left} days left</div>
+      </div>
+    </div>
+    <div class="rwst">
+      <div><div class="cap">${tgtLabel}</div><div class="v">${jmd(mine(tgtN))}</div></div>
+      <span class="dv"></span>
+      <div><div class="cap">${goLabel}</div><div class="v">${goVal}</div></div>
+    </div>
+  </div>
+  <div id="inst" class="install"></div>
+  <div class="lst">
+    <h3>Your store</h3>
+    ${li('bag','#E6EEFC','#2A4FAE','Your store’s purchases','This quarter so far',jmdM(qtd))}
+    ${li('cash','#E1F2F4','#1F6E7C','Your share of the rebate',sharePc+'% of the group rebate',jmd(MEM.store_rebate))}
+  </div>
+  <div class="lst">
+    <h3>The whole group · ${esc(title(g.customer_name))}</h3>
+    ${li('bag','#E6EEFC','#2A4FAE','Group purchases',Math.round(gPc)+'% of the group target',jmdM(gq))}
+    ${li('cash','#E1F2F4','#1F6E7C','Group rebate as it stands',nextN?TIER[nextN]+' would pay '+jmd(payAt(g,nextN)):TIER[lvl]+' rate applied',jmd(g.rebate_earned))}
+    ${li('cal','#FAEEDA','#854F0B',nextN?'Group needed each week':'Targets reached','',nextN?jmdM(needWk):'✓')}
+    ${li('trend',paceBg,paceFg,'Group projected finish',paceMsg(pt,gproj,gtop),jmdM(gproj))}
+  </div>
+  <details class="acc" open>
+    <summary><span class="ic">${IC.info}</span><span class="t">How your share works</span><span class="cv">${IC.chev}</span></summary>
+    <div class="bd">
+      <p>Your store is part of ${esc(title(g.customer_name))}. One rebate is earned for the whole group, and only when the group reaches its target together.</p>
+      <ul>
+        <li>Your store’s target is ${sharePc}% of the group target.</li>
+        <li>Your share of the rebate is also ${sharePc}% of what the group earns.</li>
+        <li>Returns and credits reduce the amount.</li>
+        <li>Payment is made 30 days after the quarter ends. Terms and conditions apply.</li>
+      </ul>
+    </div>
+  </details>`;
+
+  $('stamp').textContent=g.refreshed_at?'Updated '+new Date(g.refreshed_at).toLocaleString('en-GB',
     {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const a=$('rarc');if(a)a.style.strokeDashoffset=(RC*(1-Math.max(fillPc,1.5)/100)).toFixed(2);}));
   setupInstall();

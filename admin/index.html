@@ -158,6 +158,8 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
 .gtitle{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--mute);padding:8px 0 4px}
 .gtitle span{text-transform:none;letter-spacing:0;font-weight:600;margin-left:6px}
 .gnote{font-size:12.5px;color:var(--mute);padding:6px 0 10px}
+.mrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 0;border-top:1px solid #E6EAF4}
+.mrow .gn{flex:1 1 170px;font-weight:600;min-width:0}
 .gr{display:grid;grid-template-columns:minmax(130px,1.4fr) minmax(80px,1fr) auto 44px 70px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
 .gn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gv{color:var(--mid);font-size:12px;white-space:nowrap}
@@ -307,7 +309,7 @@ async function handleSession(session){
       $('gerr').innerHTML='<div class="err">Your Microsoft account does not have access to this page.</div>';
       await sb.auth.signOut(); $('app').style.display='none'; $('gate').style.display='flex'; return;
     }
-    AC='sso'; ALL=rows; setBands(bands); LOADED=Date.now();
+    AC='sso'; ALL=rows; setBands(bands); LOADED=Date.now(); await loadMembers();
     $('gate').style.display='none'; $('app').style.display='block'; init();
   }catch(e){ $('gerr').innerHTML='<div class="err">'+esc(e.message)+'. Check your connection.</div>'; }
 }
@@ -408,7 +410,38 @@ function storePace(x){
   const proj=CT.gone>0?Number(x.qtd)/CT.gone*CT.total:0, k=proj/tg;
   return k>=1?['On pace','st-on']:(k>=0.85?['Within reach','st-near']:['Behind','st-behind']);
 }
+/* ---------- per-store logins for groups ---------- */
+let MEMBERS=[];
+async function loadMembers(){
+  try{ const r=await rpc('rebate_sso_member_codes'); MEMBERS=Array.isArray(r)?r:[]; }catch(e){ MEMBERS=[]; }
+}
+function membersInner(r){
+  const ms=MEMBERS.filter(m=>m.account_id===r.customer_id); if(!ms.length) return '';
+  return '<div class="gtitle" style="margin-top:14px">Store logins <span>each store sees its own numbers plus the group total</span></div>'
+    +ms.map(m=>`<div class="mrow"><span class="gn">${esc(title(m.name))}</span><span class="pw">${esc(m.access_code)}</span>
+      <button class="mini" onclick="copyMemberPw('${esc(m.access_code)}')">Copy password</button>
+      <button class="mini go" onclick="shareMember('${esc(m.access_code)}')">Share link and password</button>
+      <span id="ms_${esc(m.access_code)}"></span></div>`).join('');
+}
+function memberMsg(m){
+  const r=ROWS.find(x=>x.customer_id===m.account_id);
+  return `Hi, here is your DFL Rewards page for ${title(m.name)}${r?', part of '+title(r.customer_name):''}. You can see your store's purchases, your share of the cash rebate and how the group is tracking, updated daily:\n${customerLink()}\nPassword: ${m.access_code}\nTip: open it on your phone and add it to your home screen.`;
+}
+async function copyMemberPw(code){
+  await copyText(code); const t=document.getElementById('ms_'+code); if(!t) return;
+  t.className='ok'; t.textContent='Copied'; setTimeout(()=>{t.textContent='';},1500);
+}
+async function shareMember(code){
+  const m=MEMBERS.find(x=>x.access_code===code); if(!m) return;
+  const text=memberMsg(m);
+  if(navigator.share){try{await navigator.share({text});return;}catch(e){if(e&&e.name==='AbortError')return;}}
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
 function storesInner(r){
+  const base=storesBase(r);
+  return base?base+membersInner(r):base;
+}
+function storesBase(r){
   const n=(BMAP[r.customer_id]&&BMAP[r.customer_id].n_stores)||1; if(n<2) return '';
   const d=DET[r.customer_id];
   if(!d||!Array.isArray(d.stores)) return '<div class="gtitle">Stores in this group</div><div class="gnote">Loading\u2026</div>';
