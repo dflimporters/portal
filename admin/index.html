@@ -225,6 +225,21 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
   .nn,.ns{white-space:normal}
   .xs>div,.gst,.xt{background:#fff}
 }
+/* key account manager view: names and status only, figures live in the single-customer screen */
+body.own .shd,body.own #setupBtn,body.own #setupBar,body.own #lines,body.own #privBtn{display:none}
+details.st.own>summary.sr{display:flex;align-items:center;gap:14px}
+details.st.own .c-name{flex:1;min-width:0}details.st.own .c-s{flex:0 0 auto}
+body.priv .sr .c-bar,body.priv .sr .c-nums,body.priv #hero,body.priv .xp .xs,body.priv .xp .xt,body.priv .xp .gst{filter:blur(9px);pointer-events:none;-webkit-user-select:none;user-select:none}
+/* single-customer screen */
+body.pvopen{overflow:hidden}
+.pv{position:fixed;inset:0;z-index:70;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch}
+.pvbar{position:sticky;top:0;z-index:2;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+.pvbar span{font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px;text-align:center;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pvbar .mini{background:none;border:1px solid rgba(255,255,255,.3);color:#fff}
+.pvbody{max-width:720px;margin:0 auto;padding:18px 16px calc(40px + env(safe-area-inset-bottom))}
+.pvbody .xt{margin-top:14px}
+.lockscr{position:fixed;inset:0;z-index:90;background:var(--navy);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+.lockscr h2{font-size:24px;font-weight:800}.lockscr p{color:#AFC0E4;font-size:14px;max-width:320px}
 </style>
 </head>
 <body>
@@ -249,7 +264,7 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
   <div class="wrap">
     <div class="hd">
       <div><div class="eyebrow">Key accounts</div><h1>How everyone is tracking</h1></div>
-      <div class="ctl"><select id="prog" onchange="selectProg()"></select><button class="mini" onclick="refresh()">Refresh</button><button class="mini" id="setupBtn" onclick="toggleSetup()">Setup</button></div>
+      <div class="ctl"><select id="prog" onchange="selectProg()"></select><button class="mini" onclick="refresh()">Refresh</button><button class="mini" id="privBtn" onclick="togglePriv()">Hide figures</button><button class="mini" id="setupBtn" onclick="toggleSetup()">Setup</button></div>
     </div>
     <div class="stamp" id="stamp"></div>
     <div id="setupBar"></div>
@@ -260,6 +275,9 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
     <div id="groups"></div>
   </div>
 </div>
+
+<div id="pv" class="pv" style="display:none"></div>
+<div id="lockscr" class="lockscr" style="display:none"><h2>Locked for privacy</h2><p>Customer figures are hidden while this screen is locked.</p><button class="mini go" style="padding:12px 24px;font-size:14px" onclick="unlock()">Unlock</button></div>
 
 <div id="sm" class="smo" style="display:none" onclick="if(event.target===this)closeUnlock()">
   <div class="smc">
@@ -279,6 +297,7 @@ const DEFRATE={1:1,2:1.5,3:2};
 const BR=[{k:'Platinum',n:3,name:'Platinum band'},{k:'Gold',n:2,name:'Gold band'},{k:'Silver',n:1,name:'Silver band'},{k:'',n:0,name:'Other key accounts'}];
 const sb=supabase.createClient(URL_,KEY);
 const $=id=>document.getElementById(id);
+let SCOPE='all', PV='', LCK=null, HIDDEN_AT=0;
 let AC='', ALL=[], PID=null, ROWS=[], LQ={}, LOADED=0, SIG='', BANDS=[], BMAP={}, DET={}, RANKB={}, FILTER='', SETUP='', IDLE=null;
 function setBands(b){BANDS=Array.isArray(b)?b:[];BMAP={};BANDS.forEach(x=>{BMAP[x.customer_id]=x;});}
 const RC=2*Math.PI*46;
@@ -319,18 +338,27 @@ async function doMicrosoftLogin(){
 }
 async function handleSession(session){
   if(!session){ $('app').style.display='none'; $('gate').style.display='flex'; return; }
+  const deny=async()=>{
+    $('gerr').innerHTML='<div class="err">Your Microsoft account does not have access to this page.</div>';
+    await sb.auth.signOut(); $('app').style.display='none'; $('gate').style.display='flex';
+  };
   try{
+    const who=await rpc('rebate_sso_whoami').catch(()=>null);
+    if(!who||!who.scope){ await deny(); return; }
+    SCOPE=who.scope; document.body.classList.toggle('own',SCOPE==='own');
     const [rows,bands]=await Promise.all([rpc('rebate_sso_admin_view'),rpc('rebate_sso_admin_bands').catch(()=>[])]);
     if(!Array.isArray(rows)||!rows.length){
-      $('gerr').innerHTML='<div class="err">Your Microsoft account does not have access to this page.</div>';
-      await sb.auth.signOut(); $('app').style.display='none'; $('gate').style.display='flex'; return;
+      if(SCOPE!=='own'){ await deny(); return; }
+      AC='sso'; ALL=[]; ROWS=[]; $('gate').style.display='none'; $('app').style.display='block';
+      document.querySelector('.hd .ctl').style.display='none'; $('groups').innerHTML='<div class="empty">No accounts are assigned to you yet. Ask your manager to set you as the business development manager on your customers.</div>';
+      armLock(); return;
     }
     AC='sso'; ALL=rows; setBands(bands); LOADED=Date.now(); await loadMembers();
-    $('gate').style.display='none'; $('app').style.display='block'; init();
+    $('gate').style.display='none'; $('app').style.display='block'; init(); armLock();
   }catch(e){ $('gerr').innerHTML='<div class="err">'+esc(e.message)+'. Check your connection.</div>'; }
 }
 async function signOut(){
-  await sb.auth.signOut(); AC=''; ALL=[]; ROWS=[]; SETUP=''; clearTimeout(IDLE);
+  await sb.auth.signOut(); AC=''; ALL=[]; ROWS=[]; SETUP=''; clearTimeout(IDLE); clearTimeout(LCK); closePresent();
   $('app').style.display='none'; $('gate').style.display='flex'; window.scrollTo(0,0);
 }
 
@@ -371,6 +399,12 @@ function pick(){ROWS=ALL.filter(r=>Number(r.programme_id)===Number(PID)); setCtx
 function selectProg(){pick(); renderAll();}
 
 function renderHero(){
+  if(SCOPE==='own'){
+    $('hero').innerHTML='';
+    const f0=ROWS[0]&&ROWS[0].refreshed_at;
+    $('stamp').textContent=f0?'Purchase data as at '+new Date(f0).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    return;
+  }
   const R=visRows();
   const M=R.map(model);
   const ceil=R.reduce((a,r,i)=>a+(M[i].topN?M[i].top*Number(r['l'+M[i].topN+'_rate']||0)/100:0),0);
@@ -403,6 +437,8 @@ function renderHero(){
 
 function sumInner(r){
   const m=model(r), c=ringColor(m.fill), s=ST[m.st];
+  if(SCOPE==='own') return `<div class="c-name"><div class="av">${esc(initials(r.customer_name))}</div><div style="min-width:0"><div class="nn">${esc(title(r.customer_name))}</div><div class="ns">${rankTxt(r)}</div></div></div>
+    <div class="c-s"><span class="chip ${s[1]}">${s[0]}</span></div><div class="c-chv">${CHV}</div>`;
   return `<div class="c-name"><div class="av">${esc(initials(r.customer_name))}</div><div style="min-width:0"><div class="nn">${esc(title(r.customer_name))}</div><div class="ns">${rankTxt(r)}</div></div></div>
     <div class="c-bar"><div class="mb"><i style="width:${Math.max(m.fill,2).toFixed(1)}%;background:${c}"></i></div><span class="pcn">${Math.round(m.fill)}%</span></div>
     <div class="c-nums">
@@ -492,6 +528,7 @@ function bodyHTML(r){
     <div class="gst" id="gs_${cid}">${storesInner(r)}</div>
     ${SETUP?'<div class="xt"><div class="h"><span>Level</span><span>Target (J$)</span><span>Rate %</span></div>'+rows+'</div>':roTargets(r)}
     <div class="xa"><span class="pw">${esc(r.access_code)}</span>
+      <button class="mini" onclick="presentAccount('${cid}')">Show to customer</button>
       <button class="mini" onclick="copyPw('${cid}')">Copy password</button>
       <button class="mini go" onclick="share('${cid}')">Share link and password</button>
       <span id="s_${cid}"></span></div>
@@ -514,6 +551,7 @@ function computeRanks(){
 }
 function rankTxt(r){
   const k=RANKB[r.customer_id], n=(BMAP[r.customer_id]&&BMAP[r.customer_id].n_stores)||1;
+  if(SCOPE==='own') return (n>1?'Group of '+n+' stores · ':'')+'Tap to show customer';
   return (n>1?'Group of '+n+' stores \u00b7 ':'')+(k?'#'+k.i+' of '+k.n+' in band':'Ranked #'+r.rank);
 }
 const bandName=r=>{const b=BMAP[r.customer_id];return b?b.band:(['','Silver','Gold','Platinum'][model(r).member]||'');};
@@ -537,7 +575,7 @@ function renderAll(){
   const openSet=new Set([...document.querySelectorAll('details.st[open]')].map(d=>d.dataset.cid));
   computeRanks(); renderHero(); SIG=sigOf();
   const live=ROWS[0]&&ROWS[0].programme_status==='live';
-  const plain=live?BANDS.filter(b=>!b.in_programme):[];
+  const plain=(live&&SCOPE!=='own')?BANDS.filter(b=>!b.in_programme):[];
   let h='';
   renderSeg();
   BR.forEach(g=>{
@@ -551,7 +589,9 @@ function renderAll(){
     h+=`<div class="grp" style="--gc:${TCOL[g.n]}">
       <div class="gh"><h2>${g.name}</h2><span class="gs">${total} ${total===1?'store':'stores'}${oth.length?' \u00b7 '+oth.length+' not enrolled':''}</span></div>
       <div class="shd"><span>Store</span><span>Progress</span><span>Purchased</span><span>Target</span><span>Projected</span><span>Status</span><span></span></div>
-      ${prog.map(r=>`<details class="st" data-cid="${esc(r.customer_id)}"${openSet.has(r.customer_id)?' open':''}><summary class="sr">${sumInner(r)}</summary>${bodyHTML(r)}</details>`).join('')}
+      ${prog.map(r=>SCOPE==='own'
+        ?`<details class="st own" data-cid="${esc(r.customer_id)}"><summary class="sr" onclick="event.preventDefault();presentAccount('${esc(r.customer_id)}')">${sumInner(r)}</summary></details>`
+        :`<details class="st" data-cid="${esc(r.customer_id)}"${openSet.has(r.customer_id)?' open':''}><summary class="sr">${sumInner(r)}</summary>${bodyHTML(r)}</details>`).join('')}
       ${oth.map(plainRow).join('')}
     </div>`;
   });
@@ -612,7 +652,7 @@ async function saveLines(){
 
 
 /* ---------- setup lock ---------- */
-function toggleSetup(){ if(SETUP) lockSetup(); else $('sm').style.display='flex'; }
+function toggleSetup(){ if(SCOPE==='own') return; if(SETUP) lockSetup(); else $('sm').style.display='flex'; }
 function closeUnlock(){$('sm').style.display='none';}
 function openSetup(){ SETUP='open'; closeUnlock(); applySetupUI(); bumpIdle(); renderAll(); loadLines(); }
 function lockSetup(){ SETUP=''; clearTimeout(IDLE); applySetupUI(); renderAll(); loadLines(); }
@@ -701,6 +741,52 @@ function fixLogos(){
 fixLogos();
 
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&Date.now()-LOADED>120000) refresh(true);});
+/* ---------- single-customer screen: one account only, nothing else on screen ---------- */
+function presentAccount(cid){
+  const r=ROWS.find(x=>x.customer_id===cid); if(!r) return;
+  const m=model(r), q=CT.qs?'Q'+(Math.floor(CT.qs.getMonth()/3)+1)+' '+CT.qs.getFullYear():'';
+  const tgtN=m.nextN||m.topN, id=esc(r.customer_id);
+  const payAt=n=>Math.round(Number(r['l'+n+'_target'])*Number(r['l'+n+'_rate']||0)/100);
+  const gap=m.nextN?Number(r['gap_to_l'+m.nextN]):0;
+  const ring=`<svg viewBox="0 0 112 112" role="img" aria-label="${Math.round(m.fill)} percent of target"><circle cx="56" cy="56" r="46" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="10"/><circle cx="56" cy="56" r="46" fill="none" stroke="${ringColor(m.fill)}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${RC.toFixed(2)}" stroke-dashoffset="${(RC*(1-Math.max(m.fill,1.5)/100)).toFixed(2)}" transform="rotate(-90 56 56)"/></svg>`;
+  const head=tgtN
+    ?`<div class="l">${m.T.length>1?'Your '+TIER[tgtN]+' target this quarter':'Target this quarter'}</div><div class="n">${jmdM(Number(r['l'+tgtN+'_target']))}</div><div class="m">Hit it to earn <b>${jmd(payAt(tgtN))}</b> · ${CT.left} days left</div>`
+    :`<div class="l">Target this quarter</div><div class="n">Not set</div>`;
+  PV=cid;
+  $('pv').innerHTML=`<div class="pvbar"><button class="mini" onclick="closePresent()">← Back to list</button><span>${esc(title(r.customer_name))}</span></div>
+  <div class="pvbody"><div class="rw">
+    <div class="rwtop"><span>DFL Rewards</span><span>${q}</span></div>
+    <div class="rwmain"><div class="ring">${ring}<div class="mid"><span class="rn">${Math.round(m.fill)}%</span><span class="rs">of target</span></div></div><div class="rwtx">${head}</div></div>
+    <div class="rwg">
+      <div><div class="cap">Purchased so far</div><div class="v">${jmd(m.qtd)}</div></div>
+      <div><div class="cap">${m.nextN?'Still to go':'Status'}</div><div class="v">${m.nextN?jmd(gap):'Reached'}</div></div>
+      <div><div class="cap">Rebate as it stands</div><div class="v">${jmd(r.rebate_earned)}</div></div>
+      <div><div class="cap">Payout at target</div><div class="v">${tgtN?jmd(payAt(tgtN)):'—'}</div></div>
+    </div></div>
+    ${roTargets(r)}
+    <div class="gst" id="pv_gs">${storesInner(r)}</div>
+    <div class="xa" style="margin-top:6px"><span class="pw">${esc(r.access_code)}</span>
+      <button class="mini" onclick="pvCopy('${id}')">Copy password</button>
+      <button class="mini go" onclick="share('${id}')">Share link and password</button><span id="pv_s"></span></div></div>`;
+  $('pv').style.display='block'; $('pv').scrollTop=0; document.body.classList.add('pvopen'); armLock();
+  loadPvDet(cid);
+}
+async function loadPvDet(cid){
+  const r=ROWS.find(x=>x.customer_id===cid); if(!r) return;
+  if(DET[cid]===undefined){ try{ DET[cid]=await rpc('rebate_store_detail',{p_code:r.access_code}); }catch(e){ DET[cid]=null; } }
+  const g=document.getElementById('pv_gs'); if(g&&PV===cid) g.innerHTML=storesInner(r);
+}
+function closePresent(){ PV=''; const p=$('pv'); if(p){ p.style.display='none'; p.innerHTML=''; } document.body.classList.remove('pvopen'); }
+async function pvCopy(cid){ const r=ROWS.find(x=>x.customer_id===cid); if(!r) return; await copyText(r.access_code); const t=document.getElementById('pv_s'); if(t){ t.className='ok'; t.textContent='Copied'; setTimeout(()=>{t.textContent='';},1500); } }
+function togglePriv(){ document.body.classList.toggle('priv'); $('privBtn').textContent=document.body.classList.contains('priv')?'Show figures':'Hide figures'; }
+
+/* ---------- auto-lock: covers the screen after a pause or after leaving the app ---------- */
+function armLock(){ clearTimeout(LCK); if(!AC) return; LCK=setTimeout(lockNow,(PV?300:120)*1000); }
+function lockNow(){ if(!AC) return; if(SETUP) lockSetup(); closePresent(); $('lockscr').style.display='flex'; }
+function unlock(){ $('lockscr').style.display='none'; armLock(); }
+['pointerdown','keydown','scroll','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{ if($('lockscr').style.display!=='flex') armLock(); },{passive:true,capture:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) HIDDEN_AT=Date.now(); else if(AC&&HIDDEN_AT&&Date.now()-HIDDEN_AT>45000) lockNow(); });
+
 /* ---------- install as a staff app ---------- */
 let DEFERRED=null;
 const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
