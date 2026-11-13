@@ -1,7 +1,7 @@
 {
-  "name": "DFL Rewards Staff",
-  "short_name": "DFL Staff",
-  "description": "Staff dashboard for the DFL key account rewards programme.",
+  "name": "DFL Admin Hub",
+  "short_name": "DFL Admin",
+  "description": "Admin Hub for the DFL key account rewards programme.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,6 +1,6 @@
-// Staff app shell only. Rebate figures and the sign-in session are fetched live from Supabase
+// Admin Hub app shell only. Rebate figures and the sign-in session are fetched live from Supabase
 // (a different origin, which this worker never touches) and are never cached here.
-const CACHE = 'dfl-staff-v1';
+const CACHE = 'dfl-admin-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
