@@ -227,6 +227,7 @@ details[open]>summary .c-chv{transform:rotate(90deg)}
 }
 /* key account manager view: names and status only, figures live in the single-customer screen */
 body.own .shd,body.own #setupBtn,body.own #setupBar,body.own #lines{display:none}
+body.view #setupBtn,body.view #setupBar,body.view #lines{display:none}
 details.st.own>summary.sr{display:flex;align-items:center;gap:14px}
 details.st.own .c-name{flex:1;min-width:0}details.st.own .c-s{flex:0 0 auto}
 .prevbar{align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#FDF3DC;border:1.5px solid #E3C170;color:#7A5604;border-radius:14px;padding:10px 14px;margin:0 0 16px;font-size:13px;font-weight:600}
@@ -349,7 +350,7 @@ async function handleSession(session){
   try{
     const who=await rpc('rebate_sso_whoami').catch(()=>null);
     if(!who||!who.scope){ await deny(); return; }
-    SCOPE=who.scope; REAL=who.scope; PREV=null; $('prevbar').style.display='none'; document.body.classList.toggle('own',SCOPE==='own');
+    SCOPE=who.scope; REAL=who.scope; PREV=null; $('prevbar').style.display='none'; document.body.classList.toggle('own',SCOPE==='own'); document.body.classList.toggle('view',SCOPE==='view');
     const [rows,bands]=await Promise.all([rpc('rebate_sso_admin_view'),rpc('rebate_sso_admin_bands').catch(()=>[])]);
     if(!Array.isArray(rows)||!rows.length){
       if(SCOPE!=='own'){ await deny(); return; }
@@ -656,7 +657,7 @@ async function saveLines(){
 
 
 /* ---------- setup lock ---------- */
-function toggleSetup(){ if(SCOPE==='own') return; if(SETUP) lockSetup(); else $('sm').style.display='flex'; }
+function toggleSetup(){ if(SCOPE==='own'||SCOPE==='view') return; if(SETUP) lockSetup(); else $('sm').style.display='flex'; }
 function closeUnlock(){$('sm').style.display='none';}
 function openSetup(){ SETUP='open'; closeUnlock(); applySetupUI(); bumpIdle(); renderAll(); loadLines(); }
 function lockSetup(){ SETUP=''; clearTimeout(IDLE); applySetupUI(); renderAll(); loadLines(); }
